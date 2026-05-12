@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Craft — Shui Thread 水·丝线</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <style>
+    .symbol-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 2px;
+      margin-top: 3rem;
+    }
+    .symbol-card {
+      background: var(--parchment);
+      padding: 2.5rem 2rem;
+      border-left: 3px solid transparent;
+      transition: border-color 0.3s, background 0.3s;
+    }
+    .symbol-card:hover {
+      border-left-color: var(--orange);
+      background: var(--orange-pale);
+    }
+    .symbol-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+    .symbol-name {
+      font-family: var(--font-display);
+      font-size: 1.2rem;
+      margin-bottom: 0.2rem;
+    }
+    .symbol-name-zh {
+      font-family: var(--font-body);
+      font-size: 0.75rem;
+      letter-spacing: 0.2em;
+      color: var(--orange);
+      margin-bottom: 0.8rem;
+    }
+    .symbol-meaning {
+      font-size: 0.85rem;
+      line-height: 1.7;
+      color: var(--ink-soft);
+    }
+    .process-steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 0;
+      margin-top: 3rem;
+      border: 1px solid var(--border);
+    }
+    .process-step {
+      padding: 2.5rem 2rem;
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      position: relative;
+    }
+    .process-step:last-child { border-right: none; }
+    .step-num {
+      font-family: var(--font-display);
+      font-size: 4rem;
+      color: var(--orange);
+      opacity: 0.2;
+      line-height: 1;
+      font-style: italic;
+      margin-bottom: 0.5rem;
+    }
+    .step-title {
+      font-family: var(--font-display);
+      font-size: 1.15rem;
+      margin-bottom: 0.5rem;
+    }
+    .step-title-zh {
+      font-family: var(--font-body);
+      font-size: 0.7rem;
+      letter-spacing: 0.2em;
+      color: var(--orange);
+      margin-bottom: 0.8rem;
+    }
+    .step-body {
+      font-size: 0.85rem;
+      line-height: 1.75;
+      color: var(--ink-soft);
+    }
+  </style>
+</head>
+<body>
+<!-- Custom Cursor -->
+<div class="cursor-dot"></div>
+<div class="cursor-ring"></div>
+
+<!-- Nav -->
+<nav class="site-nav">
+  <a href="/" class="nav-logo">
+    <span class="nav-logo-en">Shui Thread</span>
+    <span class="nav-logo-zh">水 · 丝 线 · 马 尾 绣</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="/">Home</a></li>
+    <li><a href="/shop.html">Shop</a></li>
+    <li><a href="/about.html" class="active">The Craft</a></li>
+  </ul>
+  <div style="display:flex;align-items:center;gap:1rem">
+    <button class="nav-cart-btn" data-cart-open>
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+      Cart
+      <span class="cart-count" style="display:none">0</span>
+    </button>
+  </div>
+</nav>
+
+<!-- Cart -->
+<div class="cart-overlay"></div>
+<div class="cart-panel">
+  <div class="cart-panel-header">
+    <div class="cart-panel-title">Cart <span>购物车</span></div>
+    <button class="cart-close">✕</button>
+  </div>
+  <div class="cart-items"></div>
+  <div class="cart-panel-footer">
+    <div class="cart-subtotal">
+      <span class="cart-subtotal-label">Subtotal</span>
+      <span class="cart-subtotal-amount">¥0</span>
+    </div>
+    <p class="cart-shipping-note">Free shipping on orders over ¥2,000</p>
+    <a href="/checkout.html" class="btn-checkout">Proceed to Checkout →</a>
+  </div>
+</div>
+
+<!-- About Hero -->
+<div class="about-hero" id="heritage">
+  <div style="position:relative;z-index:2">
+    <div style="font-family:var(--font-mono);font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;color:rgba(255,255,255,0.5);margin-bottom:1.5rem">
+      The Craft · 工 艺
+    </div>
+    <h1 style="font-family:var(--font-display);font-size:clamp(3.5rem,10vw,8rem);line-height:0.92;letter-spacing:-0.03em;max-width:12ch;margin:0 auto">
+      Horsetail.<br>Silk.<br><em style="color:var(--orange);font-style:italic">Memory.</em>
+    </h1>
+    <p style="font-family:var(--font-body);font-size:0.85rem;letter-spacing:0.35em;color:rgba(255,255,255,0.4);margin-top:1.5rem">
+      水 族 马 尾 绣 · Shui People's Horsetail Hair Embroidery
+    </p>
+  </div>
+</div>
+
+<!-- Story Body -->
+<div class="about-content page-fade-in">
+  <div style="font-family:var(--font-mono);font-size:0.7rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--orange);margin-bottom:2rem">
+    01 — Introduction · 介绍
+  </div>
+
+  <p>
+    Shui horsetail hair embroidery is an extraordinary textile art of the Shui people of Guizhou, in south-west China. Distinguished by its rare and intricate technique, each stitch is built around a strand of horsetail hair, wrapped finely in silk thread to create raised patterns of striking texture and beauty.
+  </p>
+  <p>
+    Traditionally embroidered by Shui women for ceremonial dress, children's carriers and other cherished textiles, these motifs draw on nature, legend and the symbolic language of daily life. Each design carries its own meaning, expressing hopes for protection, wellbeing and good fortune, while reflecting the cultural memory of the Shui community.
+  </p>
+  <p>
+    Handed down through generations, this refined craft is both an artistic tradition and a living record of Shui heritage. Today, it continues through contemporary handmade works, preserving its unique character while bringing its quiet beauty to new audiences.
+  </p>
+
+  <div style="background:var(--teal);color:white;padding:2.5rem;border-radius:2px;margin:3rem 0;position:relative;overflow:hidden">
+    <div style="position:absolute;top:-20px;right:-20px;font-family:var(--font-display);font-size:12rem;color:rgba(255,255,255,0.05);line-height:1;pointer-events:none">"</div>
+    <p style="font-family:var(--font-display);font-size:clamp(1.3rem,3vw,2rem);line-height:1.3;font-style:italic;position:relative;z-index:1">
+      Every strand of horsetail hair is first softened by hand, then wrapped in thread so fine it takes hours to cover a centimetre.
+    </p>
+    <div style="font-family:var(--font-mono);font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.5);margin-top:1.5rem">
+      — Shui Master Artisan, Sandu County
+    </div>
+  </div>
+</div>
+
+<!-- Process -->
+<section class="section" style="background:var(--white);" id="artisans">
+  <div style="max-width:var(--narrow);margin:0 auto;padding:0 var(--gap)">
+    <div class="section-header">
+      <div>
+        <div class="section-num">02</div>
+        <h2 class="section-title">The Process</h2>
+        <div class="section-title-zh">工 序</div>
+      </div>
+    </div>
+    <div class="process-steps">
+      <div class="process-step reveal">
+        <div class="step-num">一</div>
+        <div class="step-title">Preparing the Hair</div>
+        <div class="step-title-zh">备 马 尾</div>
+        <p class="step-body">Horsetail hair is carefully selected, cleaned and softened. Only the finest, longest strands are used — often sourced from specific horses in the Guizhou highlands.</p>
+      </div>
+      <div class="process-step reveal reveal-delay-1">
+        <div class="step-num">二</div>
+        <div class="step-title">Silk Wrapping</div>
+        <div class="step-title-zh">缠 丝 线</div>
+        <p class="step-body">Each horsetail hair strand is wound tightly in silk thread, dyed in traditional colours. This is the foundational step that gives the embroidery its raised, sculptural quality.</p>
+      </div>
+      <div class="process-step reveal reveal-delay-2">
+        <div class="step-num">三</div>
+        <div class="step-title">Design Transfer</div>
+        <div class="step-title-zh">描 图 案</div>
+        <p class="step-body">Traditional motifs are transferred to indigo-dyed linen or cotton base fabric. Many patterns are passed down through memory — never written, only shown hand to hand.</p>
+      </div>
+      <div class="process-step reveal reveal-delay-3">
+        <div class="step-num">四</div>
+        <div class="step-title">Couching & Filling</div>
+        <div class="step-title-zh">盘 绣 填 充</div>
+        <p class="step-body">The wrapped horsetail hair is couched onto the fabric surface following the design outlines, then the interior shapes are filled with dense silk stitching in vivid colours.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Symbols -->
+<section class="section" style="background:var(--cream)">
+  <div style="max-width:var(--mid);margin:0 auto;padding:0 var(--gap)">
+    <div class="section-header">
+      <div>
+        <div class="section-num">03</div>
+        <h2 class="section-title">The Symbolic Language</h2>
+        <div class="section-title-zh">图 案 寓 意</div>
+      </div>
+    </div>
+    <div class="symbol-grid">
+      <div class="symbol-card reveal">
+        <div class="symbol-icon">🐟</div>
+        <div class="symbol-name">Fish</div>
+        <div class="symbol-name-zh">鱼 · Yú</div>
+        <p class="symbol-meaning">Abundance, fertility, and the perpetual flow of good fortune. Fish appear in nearly every ceremonial piece, moving through the fabric as through water.</p>
+      </div>
+      <div class="symbol-card reveal reveal-delay-1">
+        <div class="symbol-icon">🦋</div>
+        <div class="symbol-name">Butterfly</div>
+        <div class="symbol-name-zh">蝶 · Dié</div>
+        <p class="symbol-meaning">Transformation, the soul's journey, and love. The Shui people believe butterflies carry messages between the living world and ancestral spirits.</p>
+      </div>
+      <div class="symbol-card reveal reveal-delay-2">
+        <div class="symbol-icon">🌸</div>
+        <div class="symbol-name">Lotus / Flower</div>
+        <div class="symbol-name-zh">莲 · Lián</div>
+        <p class="symbol-meaning">Purity arising from difficulty. The lotus grows through mud to bloom immaculate — a symbol of the human spirit's capacity for beauty despite hardship.</p>
+      </div>
+      <div class="symbol-card reveal reveal-delay-3">
+        <div class="symbol-icon">🌿</div>
+        <div class="symbol-name">Vine</div>
+        <div class="symbol-name-zh">藤 · Téng</div>
+        <p class="symbol-meaning">Continuity across generations — the vine connects root to branch, ancestor to child, past to future. It is the emblem of unbroken tradition.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section style="background:var(--orange);color:white;padding:clamp(4rem,8vw,8rem) var(--gap);text-align:center">
+  <div style="max-width:600px;margin:0 auto">
+    <div class="reveal" style="font-family:var(--font-display);font-size:clamp(2.5rem,6vw,5rem);line-height:0.95;letter-spacing:-0.02em;margin-bottom:1.5rem">
+      Carry a piece of<br><em style="font-style:italic;opacity:0.7">history</em>
+    </div>
+    <p class="reveal reveal-delay-1" style="font-size:0.95rem;line-height:1.8;opacity:0.85;margin-bottom:2.5rem">
+      Every piece in our collection is an original handmade work, directly from artisans in Sandu County, Guizhou.
+    </p>
+    <a href="/shop.html" class="btn-white reveal reveal-delay-2">
+      Explore the Collection
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </a>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="nav-logo">
+        <span class="nav-logo-en">Shui Thread</span>
+        <span class="nav-logo-zh">水 · 丝 线 · 马 尾 绣</span>
+      </div>
+      <p class="footer-tagline">Preserving the horsetail hair embroidery tradition of the Shui people of Guizhou, China.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Shop</h4>
+      <ul>
+        <li><a href="/shop.html">All Pieces</a></li>
+        <li><a href="/shop.html?cat=accessories">Accessories</a></li>
+        <li><a href="/shop.html?cat=textile">Textiles</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>About</h4>
+      <ul>
+        <li><a href="/about.html">The Craft</a></li>
+        <li><a href="/about.html#artisans">The Process</a></li>
+        <li><a href="/about.html#heritage">Heritage</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-copy">© 2026 Shui Thread · All rights reserved</div>
+    <div class="footer-copy">Handmade in Sandu, Guizhou · 制于贵州三都</div>
+  </div>
+</footer>
+
+<script src="/js/cart.js"></script>
+</body>
+</html>

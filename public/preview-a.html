@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Option A — Indigo Editorial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Lora:ital,wght@0,400;0,500;1,400&family=Courier+Prime:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#0D1A38;
+  --ink-mid:#162240;
+  --ink-soft:#1E2E52;
+  --gold:#C4A35A;
+  --gold-pale:#F0E6C8;
+  --amber:#D4723A;
+  --cream:#F2EDE3;
+  --paper:#E8E0D0;
+  --white:#FAF8F3;
+  --rule:rgba(196,163,90,0.3);
+  --font-display:'Cormorant Garamond',Georgia,serif;
+  --font-body:'Lora',Georgia,serif;
+  --font-mono:'Courier Prime',monospace;
+}
+html{font-size:16px;scroll-behavior:smooth}
+body{background:var(--ink);color:var(--cream);font-family:var(--font-body);overflow-x:hidden;cursor:none}
+img{display:block;max-width:100%;height:auto}
+a{color:inherit;text-decoration:none}
+button{cursor:pointer;font-family:inherit;border:none;background:none}
+
+/* CURSOR */
+.c-dot{position:fixed;width:6px;height:6px;background:var(--gold);border-radius:50%;pointer-events:none;z-index:9999;transform:translate(-50%,-50%);transition:transform .08s}
+.c-ring{position:fixed;width:28px;height:28px;border:1px solid var(--gold);border-radius:50%;pointer-events:none;z-index:9998;transform:translate(-50%,-50%);transition:transform .22s ease-out,width .3s,height .3s;opacity:.5}
+
+/* GRAIN OVERLAY */
+body::before{
+  content:'';position:fixed;inset:0;z-index:1000;pointer-events:none;
+  background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='.035'/%3E%3C/svg%3E");
+  opacity:.4;mix-blend-mode:overlay;
+}
+
+/* NAV */
+.nav{
+  position:fixed;top:0;left:0;right:0;z-index:500;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1.4rem 3rem;
+  border-bottom:1px solid var(--rule);
+  background:rgba(13,26,56,0.92);
+  backdrop-filter:blur(16px);
+}
+.nav-logo{
+  font-family:var(--font-display);font-size:1.5rem;font-weight:300;
+  letter-spacing:.08em;color:var(--cream);
+}
+.nav-logo em{font-style:italic;color:var(--gold)}
+.nav-logo-sub{font-family:var(--font-mono);font-size:.6rem;letter-spacing:.3em;color:rgba(242,237,227,.35);margin-top:2px}
+.nav-links{display:flex;gap:3rem;list-style:none}
+.nav-links a{
+  font-family:var(--font-mono);font-size:.68rem;letter-spacing:.18em;text-transform:uppercase;
+  color:rgba(242,237,227,.55);transition:color .25s
+}
+.nav-links a:hover{color:var(--gold)}
+.nav-cart{
+  font-family:var(--font-mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--cream);border:1px solid var(--rule);padding:.5rem 1.2rem;
+  transition:border-color .25s,color .25s;
+}
+.nav-cart:hover{border-color:var(--gold);color:var(--gold)}
+
+/* HERO */
+.hero{
+  min-height:100vh;
+  display:grid;grid-template-columns:55fr 45fr;
+  padding-top:5rem;
+}
+.hero-text{
+  padding:6rem 4rem 6rem 5rem;
+  display:flex;flex-direction:column;justify-content:center;
+  position:relative;border-right:1px solid var(--rule);
+}
+.hero-chapter{
+  font-family:var(--font-mono);font-size:.62rem;letter-spacing:.25em;text-transform:uppercase;
+  color:var(--gold);margin-bottom:2.5rem;display:flex;align-items:center;gap:1rem;
+}
+.hero-chapter::before{content:'I';font-family:var(--font-display);font-size:1rem;font-style:italic;color:rgba(196,163,90,.5)}
+.hero-h1{
+  font-family:var(--font-display);font-size:clamp(4rem,7vw,6.5rem);font-weight:300;
+  line-height:.92;letter-spacing:-.01em;margin-bottom:.6rem;
+}
+.hero-h1 em{font-style:italic;color:var(--gold)}
+.hero-h1-zh{
+  font-family:var(--font-display);font-size:clamp(1rem,2vw,1.5rem);font-weight:300;
+  letter-spacing:.4em;color:rgba(242,237,227,.35);margin-bottom:3rem;
+}
+.gold-rule{width:80px;height:1px;background:var(--gold);opacity:.5;margin-bottom:2.5rem}
+.hero-body{
+  font-size:.95rem;line-height:1.9;color:rgba(242,237,227,.65);max-width:38ch;margin-bottom:3.5rem;
+  font-weight:400;font-style:italic;
+}
+.hero-btns{display:flex;gap:2rem;align-items:center}
+.btn-a{
+  background:transparent;color:var(--gold);
+  border:1px solid var(--gold);
+  padding:.8rem 2.2rem;
+  font-family:var(--font-mono);font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;
+  transition:background .25s,color .25s;
+}
+.btn-a:hover{background:var(--gold);color:var(--ink)}
+.btn-a-ghost{
+  font-family:var(--font-mono);font-size:.65rem;letter-spacing:.14em;text-transform:uppercase;
+  color:rgba(242,237,227,.45);
+  display:flex;align-items:center;gap:.5rem;
+  border-bottom:1px solid transparent;
+  transition:color .25s,border-color .25s;padding-bottom:2px;
+}
+.btn-a-ghost:hover{color:var(--cream);border-color:rgba(242,237,227,.3)}
+.hero-pg{
+  position:absolute;bottom:3rem;left:5rem;
+  font-family:var(--font-display);font-size:.8rem;font-style:italic;
+  color:rgba(242,237,227,.2);letter-spacing:.05em;
+}
+
+/* HERO IMAGE PANEL */
+.hero-image{
+  position:relative;overflow:hidden;background:var(--ink-mid);
+}
+.hero-image img{
+  width:100%;height:100%;object-fit:cover;
+  filter:sepia(20%) contrast(1.1) brightness(.85);
+  mix-blend-mode:luminosity;
+  transition:transform 10s ease;
+}
+.hero-image:hover img{transform:scale(1.04)}
+.hero-img-overlay{
+  position:absolute;inset:0;
+  background:linear-gradient(to bottom,rgba(13,26,56,.1),rgba(13,26,56,.6));
+}
+.hero-img-caption{
+  position:absolute;bottom:2rem;right:2rem;
+  font-family:var(--font-mono);font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;
+  color:rgba(242,237,227,.4);
+  writing-mode:vertical-rl;
+}
+.hero-gold-tag{
+  position:absolute;top:2rem;left:2rem;
+  background:rgba(196,163,90,.15);border:1px solid rgba(196,163,90,.3);
+  padding:.35rem .8rem;
+  font-family:var(--font-mono);font-size:.58rem;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--gold);
+}
+/* The big watermark number */
+.hero-watermark{
+  position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+  font-family:var(--font-display);font-size:28vw;font-weight:300;font-style:italic;
+  color:rgba(255,255,255,.03);pointer-events:none;line-height:1;white-space:nowrap;
+}
+
+/* MARQUEE */
+.marquee{
+  border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);
+  padding:.75rem 0;overflow:hidden;background:var(--ink-mid);
+}
+.marquee-track{display:flex;animation:mq 35s linear infinite;white-space:nowrap}
+.m-item{font-family:var(--font-mono);font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;padding:0 2.5rem;color:rgba(242,237,227,.3)}
+.m-sep{color:var(--gold);opacity:.5}
+@keyframes mq{0%{transform:translateX(0)}100%{transform:translateX(-50%)}}
+
+/* COLLECTION SECTION */
+.coll{padding:6rem 5rem;background:var(--ink)}
+.sec-header{
+  display:flex;align-items:flex-end;justify-content:space-between;
+  border-bottom:1px solid var(--rule);padding-bottom:1.5rem;margin-bottom:4rem;
+}
+.sec-num{
+  font-family:var(--font-display);font-size:.8rem;font-style:italic;
+  color:rgba(196,163,90,.45);display:block;margin-bottom:.3rem;
+}
+.sec-title{
+  font-family:var(--font-display);font-size:clamp(2rem,4vw,3.2rem);
+  font-weight:300;letter-spacing:-.01em;
+}
+.sec-title em{font-style:italic;color:var(--gold)}
+.sec-title-zh{
+  font-family:var(--font-display);font-size:.8rem;letter-spacing:.35em;
+  color:rgba(242,237,227,.25);margin-top:.4rem;
+}
+
+/* PRODUCT GRID */
+.prod-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--rule)}
+.prod-card{
+  background:var(--ink-mid);padding:0;overflow:hidden;cursor:pointer;
+  position:relative;
+  transition:background .3s;
+}
+.prod-card:hover{background:var(--ink-soft)}
+.prod-img{
+  aspect-ratio:3/4;overflow:hidden;
+  background:linear-gradient(135deg,var(--ink-soft),var(--ink-mid));
+  position:relative;
+}
+.prod-img img{
+  width:100%;height:100%;object-fit:cover;
+  filter:sepia(15%) brightness(.9);
+  transition:transform .8s ease,filter .4s;
+}
+.prod-card:hover .prod-img img{transform:scale(1.05);filter:sepia(0%) brightness(1)}
+.prod-placeholder{
+  width:100%;height:100%;display:flex;align-items:center;justify-content:center;
+}
+.prod-meta{padding:1.5rem 1.8rem 2rem}
+.prod-cat{
+  font-family:var(--font-mono);font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--gold);opacity:.7;margin-bottom:.5rem;
+}
+.prod-name{
+  font-family:var(--font-display);font-size:1.3rem;font-weight:300;
+  line-height:1.15;letter-spacing:-.01em;margin-bottom:.2rem;
+}
+.prod-name-zh{font-family:var(--font-display);font-size:.72rem;letter-spacing:.2em;color:rgba(242,237,227,.3);margin-bottom:1rem}
+.prod-price{font-family:var(--font-display);font-size:1.4rem;font-weight:300;font-style:italic;color:var(--gold)}
+.prod-price-usd{font-family:var(--font-mono);font-size:.62rem;color:rgba(242,237,227,.3);margin-left:.4rem}
+.prod-action{
+  position:absolute;inset:0;
+  background:rgba(13,26,56,.88);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;
+  opacity:0;transition:opacity .3s;
+}
+.prod-card:hover .prod-action{opacity:1}
+.prod-action-btn{
+  font-family:var(--font-mono);font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--cream);border:1px solid rgba(196,163,90,.4);padding:.65rem 1.8rem;
+  transition:border-color .2s,color .2s;
+}
+.prod-action-btn:hover{border-color:var(--gold);color:var(--gold)}
+/* vertical line numbers on hover card */
+.prod-index{
+  position:absolute;top:1.2rem;right:1.5rem;
+  font-family:var(--font-display);font-size:.7rem;font-style:italic;
+  color:rgba(196,163,90,.3);
+}
+
+/* STORY - DARK EDITORIAL */
+.story{
+  display:grid;grid-template-columns:1fr 1fr;
+  border-top:1px solid var(--rule);
+}
+.story-img{
+  background:var(--ink-mid);overflow:hidden;min-height:70vh;position:relative;
+}
+.story-img img{
+  width:100%;height:100%;object-fit:cover;object-position:center 25%;
+  filter:sepia(25%) contrast(1.1);mix-blend-mode:luminosity;
+}
+.story-img::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(to right,transparent 50%,var(--ink) 100%);
+}
+.story-text{
+  padding:6rem 5rem 6rem 4rem;display:flex;flex-direction:column;justify-content:center;
+  background:var(--ink);position:relative;
+}
+.story-text::before{
+  content:'II';position:absolute;top:4rem;right:4rem;
+  font-family:var(--font-display);font-size:6rem;font-style:italic;font-weight:300;
+  color:rgba(196,163,90,.05);line-height:1;
+}
+.story-over{
+  font-family:var(--font-mono);font-size:.6rem;letter-spacing:.22em;text-transform:uppercase;
+  color:var(--gold);opacity:.7;margin-bottom:2rem;
+  display:flex;align-items:center;gap:.8rem;
+}
+.story-over::before{content:'—';opacity:.5}
+.story-h2{
+  font-family:var(--font-display);font-size:clamp(2.5rem,5vw,4.5rem);
+  font-weight:300;line-height:.95;letter-spacing:-.01em;margin-bottom:.5rem;
+}
+.story-h2 em{color:var(--gold);font-style:italic}
+.story-zh{font-family:var(--font-display);font-size:.8rem;letter-spacing:.35em;color:rgba(242,237,227,.25);margin-bottom:2.5rem}
+.story-body{font-size:.9rem;line-height:1.95;color:rgba(242,237,227,.6);max-width:40ch;margin-bottom:3rem;font-style:italic}
+.stats{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;padding:2rem 0;border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);margin-bottom:3rem}
+.stat-n{font-family:var(--font-display);font-size:2.8rem;font-weight:300;font-style:italic;color:var(--gold);line-height:1}
+.stat-l{font-family:var(--font-mono);font-size:.58rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(242,237,227,.35);margin-top:.3rem}
+
+/* GOLD BLOCK */
+.gold-block{
+  background:var(--gold-pale);color:var(--ink);
+  padding:6rem 5rem;
+  display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:center;
+}
+.gold-block-title{font-family:var(--font-display);font-size:clamp(2.5rem,5vw,5rem);font-weight:300;line-height:.92;letter-spacing:-.02em}
+.gold-block-title em{font-style:italic;color:var(--amber)}
+.gold-block-body{font-size:.92rem;line-height:1.85;color:rgba(13,26,56,.7);margin-bottom:2rem}
+.btn-dark{
+  background:var(--ink);color:var(--gold);padding:.85rem 2.2rem;
+  font-family:var(--font-mono);font-size:.68rem;letter-spacing:.14em;text-transform:uppercase;
+  display:inline-flex;align-items:center;gap:.6rem;
+  transition:background .2s;
+}
+.btn-dark:hover{background:var(--amber)}
+/* Decorative motif in gold block */
+.gold-motif{display:flex;align-items:center;justify-content:center}
+
+/* FOOTER */
+.footer{
+  background:var(--ink-mid);
+  border-top:1px solid var(--rule);
+  padding:4rem 5rem 2rem;
+}
+.footer-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:4rem;margin-bottom:4rem}
+.footer-brand-name{font-family:var(--font-display);font-size:1.8rem;font-weight:300;letter-spacing:.05em}
+.footer-brand-name em{font-style:italic;color:var(--gold)}
+.footer-brand-zh{font-family:var(--font-mono);font-size:.58rem;letter-spacing:.3em;color:rgba(242,237,227,.25);margin-top:.3rem;margin-bottom:1.2rem}
+.footer-desc{font-size:.82rem;line-height:1.8;color:rgba(242,237,227,.4);max-width:26ch;font-style:italic}
+.footer-col h5{font-family:var(--font-mono);font-size:.58rem;letter-spacing:.2em;text-transform:uppercase;color:var(--gold);opacity:.6;margin-bottom:1.2rem}
+.footer-col ul{list-style:none}
+.footer-col li{margin-bottom:.6rem}
+.footer-col a{font-size:.82rem;color:rgba(242,237,227,.4);transition:color .2s}
+.footer-col a:hover{color:var(--cream)}
+.footer-bottom{border-top:1px solid var(--rule);padding-top:1.5rem;display:flex;justify-content:space-between;align-items:center}
+.footer-copy{font-family:var(--font-mono);font-size:.58rem;letter-spacing:.1em;color:rgba(242,237,227,.2)}
+
+/* ANIMATIONS */
+.fade-up{opacity:0;transform:translateY(24px);animation:fu .8s ease forwards}
+@keyframes fu{to{opacity:1;transform:translateY(0)}}
+.delay-1{animation-delay:.15s}
+.delay-2{animation-delay:.3s}
+.delay-3{animation-delay:.45s}
+.delay-4{animation-delay:.6s}
+</style>
+</head>
+<body>
+
+<div class="c-dot" id="dot"></div>
+<div class="c-ring" id="ring"></div>
+
+<!-- NAV -->
+<nav class="nav">
+  <div>
+    <div class="nav-logo">Shui <em>Thread</em></div>
+    <div class="nav-logo-sub">水 · 丝 线 · 马 尾 绣</div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#">Home</a></li>
+    <li><a href="#">Collection</a></li>
+    <li><a href="#">The Craft</a></li>
+  </ul>
+  <button class="nav-cart">Cart (0)</button>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-text">
+    <div class="hero-chapter fade-up">Guizhou, China · 贵州</div>
+    <h1 class="hero-h1 fade-up delay-1">
+      Thread<br>
+      of <em>living</em><br>
+      memory
+    </h1>
+    <div class="hero-h1-zh fade-up delay-2">马 尾 绣 · Horsetail Hair Embroidery</div>
+    <div class="gold-rule fade-up delay-2"></div>
+    <p class="hero-body fade-up delay-3">
+      <em>Each stitch is anchored in a strand of horsetail hair, wrapped in finest silk. A four-hundred-year art, still alive.</em>
+    </p>
+    <div class="hero-btns fade-up delay-4">
+      <a href="#" class="btn-a">Explore Collection</a>
+      <a href="#" class="btn-a-ghost">The Craft ↗</a>
+    </div>
+    <div class="hero-pg">p. 001</div>
+  </div>
+  <div class="hero-image">
+    <div class="hero-watermark">水</div>
+    <img src="/imgs/ChatGPT Image 2026年3月29日 11_14_57.png" alt="Shui embroidery" onerror="this.style.display='none'">
+    <div class="hero-img-overlay"></div>
+    <div class="hero-gold-tag">Sandu · Guizhou</div>
+    <div class="hero-img-caption">Horsetail · Silk · Thread</div>
+  </div>
+</section>
+
+<!-- MARQUEE -->
+<div class="marquee">
+  <div class="marquee-track">
+    <span class="m-item">水族马尾绣</span><span class="m-item m-sep">✦</span>
+    <span class="m-item">Horsetail Hair Embroidery</span><span class="m-item m-sep">✦</span>
+    <span class="m-item">Handcrafted in Guizhou</span><span class="m-item m-sep">✦</span>
+    <span class="m-item">Living Heritage · 非遗</span><span class="m-item m-sep">✦</span>
+    <span class="m-item">400 Years of Tradition</span><span class="m-item m-sep">✦</span>
+    <span class="m-item">每针皆故事</span><span class="m-item m-sep">✦</span>
+    <span class="m-item">水族马尾绣</span><span class="m-item m-sep">✦</span>
+    <span class="m-item">Horsetail Hair Embroidery</span><span class="m-item m-sep">✦</span>
+    <span class="m-item">Handcrafted in Guizhou</span><span class="m-item m-sep">✦</span>
+    <span class="m-item">Living Heritage · 非遗</span><span class="m-item m-sep">✦</span>
+    <span class="m-item">400 Years of Tradition</span><span class="m-item m-sep">✦</span>
+    <span class="m-item">每针皆故事</span><span class="m-item m-sep">✦</span>
+  </div>
+</div>
+
+<!-- COLLECTION -->
+<section class="coll">
+  <div class="sec-header">
+    <div>
+      <span class="sec-num">II — The Collection</span>
+      <h2 class="sec-title">Selected <em>Works</em></h2>
+      <div class="sec-title-zh">藏 品 精 选</div>
+    </div>
+    <a href="#" style="font-family:var(--font-mono);font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:rgba(196,163,90,.6);border-bottom:1px solid rgba(196,163,90,.2);padding-bottom:2px">View All →</a>
+  </div>
+
+  <div class="prod-grid">
+    <!-- Product 1 -->
+    <div class="prod-card">
+      <div class="prod-index">001</div>
+      <div class="prod-img">
+        <img src="/imgs/ChatGPT Image 2026年3月29日 11_14_57.png" alt="" onerror="this.parentElement.style.background='linear-gradient(135deg,#162240,#1E2E52)'">
+      </div>
+      <div class="prod-meta">
+        <div class="prod-cat">Accessories</div>
+        <div class="prod-name">Flower Medallion Brooch</div>
+        <div class="prod-name-zh">花卉圆章胸针</div>
+        <span class="prod-price">¥680</span><span class="prod-price-usd">/ $95</span>
+      </div>
+      <div class="prod-action">
+        <a href="#" class="prod-action-btn">View Details</a>
+        <button class="prod-action-btn">Add to Cart</button>
+      </div>
+    </div>
+    <!-- Product 2 -->
+    <div class="prod-card">
+      <div class="prod-index">002</div>
+      <div class="prod-img" style="background:linear-gradient(135deg,#0D1A38,#162240)">
+        <div class="prod-placeholder">
+          <svg width="70" height="70" viewBox="0 0 70 70" fill="none"><circle cx="35" cy="35" r="30" stroke="rgba(196,163,90,.2)" stroke-width="1"/><circle cx="35" cy="35" r="18" stroke="rgba(196,163,90,.15)" stroke-width="1"/><path d="M35 10 C42 22 52 26 52 35 C52 44 42 48 35 60 C28 48 18 44 18 35 C18 26 28 22 35 10Z" stroke="rgba(196,163,90,.2)" stroke-width=".8" fill="none"/></svg>
+        </div>
+      </div>
+      <div class="prod-meta">
+        <div class="prod-cat">Textile</div>
+        <div class="prod-name">Ceremonial Panel Fragment</div>
+        <div class="prod-name-zh">礼仪刺绣布片</div>
+        <span class="prod-price">¥2,800</span><span class="prod-price-usd">/ $390</span>
+      </div>
+      <div class="prod-action">
+        <a href="#" class="prod-action-btn">View Details</a>
+        <button class="prod-action-btn">Add to Cart</button>
+      </div>
+    </div>
+    <!-- Product 3 -->
+    <div class="prod-card">
+      <div class="prod-index">003</div>
+      <div class="prod-img" style="background:linear-gradient(135deg,#1E2E52,#0D1A38)">
+        <div class="prod-placeholder">
+          <svg width="70" height="70" viewBox="0 0 70 70" fill="none"><rect x="10" y="10" width="50" height="50" stroke="rgba(196,163,90,.2)" stroke-width="1"/><rect x="20" y="20" width="30" height="30" stroke="rgba(196,163,90,.12)" stroke-width=".8" transform="rotate(45 35 35)"/><circle cx="35" cy="35" r="6" fill="rgba(196,163,90,.12)"/></svg>
+        </div>
+      </div>
+      <div class="prod-meta">
+        <div class="prod-cat">Accessories</div>
+        <div class="prod-name">Embroidered Belt Pouch</div>
+        <div class="prod-name-zh">刺绣腰包</div>
+        <span class="prod-price">¥1,200</span><span class="prod-price-usd">/ $165</span>
+      </div>
+      <div class="prod-action">
+        <a href="#" class="prod-action-btn">View Details</a>
+        <button class="prod-action-btn">Add to Cart</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STORY -->
+<section class="story">
+  <div class="story-img">
+    <img src="/imgs/ChatGPT Image 2026年3月29日 11_14_57.png" alt="" onerror="this.style.display='none'">
+  </div>
+  <div class="story-text">
+    <div class="story-over">The Craft · 工艺</div>
+    <h2 class="story-h2">A thread<br>around<br><em>history</em></h2>
+    <div class="story-zh">以 针 线 串 联 历 史</div>
+    <p class="story-body">
+      Shui horsetail hair embroidery is unique in all the world — each stitch is anchored around a strand of actual horsetail hair, then wrapped in the finest silk. Tactile, sculptural, unmistakably alive.
+    </p>
+    <div class="stats">
+      <div><div class="stat-n">400+</div><div class="stat-l">Years of tradition</div></div>
+      <div><div class="stat-n">12h</div><div class="stat-l">Minimum per piece</div></div>
+      <div><div class="stat-n">2006</div><div class="stat-l">National heritage</div></div>
+      <div><div class="stat-n">∞</div><div class="stat-l">Motifs</div></div>
+    </div>
+    <a href="#" class="btn-a" style="align-self:flex-start">Read the Story</a>
+  </div>
+</section>
+
+<!-- GOLD BLOCK -->
+<section class="gold-block">
+  <div>
+    <h2 class="gold-block-title">Made<br>by<br><em>hand</em></h2>
+  </div>
+  <div>
+    <p class="gold-block-body">
+      Every piece is embroidered by a Shui artisan in Sandu County, Guizhou. No machines. No shortcuts. The tradition demands patience, and patience produces beauty that endures centuries.
+    </p>
+    <a href="#" class="btn-dark">
+      Shop Handmade Pieces
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </a>
+    <div class="gold-motif" style="margin-top:2.5rem">
+      <svg width="180" height="60" viewBox="0 0 180 60" fill="none" opacity=".3">
+        <line x1="0" y1="30" x2="180" y2="30" stroke="#0D1A38" stroke-width=".8"/>
+        <circle cx="90" cy="30" r="18" stroke="#0D1A38" stroke-width=".8"/>
+        <circle cx="90" cy="30" r="6" stroke="#D4723A" stroke-width="1.5"/>
+        <circle cx="30" cy="30" r="4" fill="#D4723A" opacity=".6"/>
+        <circle cx="150" cy="30" r="4" fill="#D4723A" opacity=".6"/>
+        <line x1="72" y1="30" x2="108" y2="30" stroke="#D4723A" stroke-width=".8"/>
+      </svg>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer class="footer">
+  <div class="footer-grid">
+    <div>
+      <div class="footer-brand-name">Shui <em>Thread</em></div>
+      <div class="footer-brand-zh">水 · 丝 线 · 马 尾 绣</div>
+      <p class="footer-desc"><em>Horsetail hair embroidery from the Shui people of Guizhou — a living tradition, preserved.</em></p>
+    </div>
+    <div class="footer-col">
+      <h5>Collection</h5>
+      <ul>
+        <li><a href="#">All Pieces</a></li>
+        <li><a href="#">Accessories</a></li>
+        <li><a href="#">Textiles</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h5>About</h5>
+      <ul>
+        <li><a href="#">The Craft</a></li>
+        <li><a href="#">Artisans</a></li>
+        <li><a href="#">Heritage</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-copy">© 2026 Shui Thread · All rights reserved</div>
+    <div class="footer-copy">Handmade in Sandu, Guizhou · 制于贵州三都</div>
+  </div>
+</footer>
+
+<script>
+const dot = document.getElementById('dot');
+const ring = document.getElementById('ring');
+document.addEventListener('mousemove', e => {
+  dot.style.transform = `translate(${e.clientX - 3}px,${e.clientY - 3}px)`;
+  ring.style.transform = `translate(${e.clientX - 14}px,${e.clientY - 14}px)`;
+});
+document.querySelectorAll('a,button').forEach(el => {
+  el.addEventListener('mouseenter', () => {
+    ring.style.width = '48px';ring.style.height = '48px';
+    ring.style.borderColor = '#C4A35A';ring.style.opacity = '1';
+  });
+  el.addEventListener('mouseleave', () => {
+    ring.style.width = '28px';ring.style.height = '28px';ring.style.opacity = '.5';
+  });
+});
+</script>
+</body>
+</html>

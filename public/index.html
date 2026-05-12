@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shui Thread — 水·丝线 Horsetail Hair Embroidery</title>
+  <meta name="description" content="Handcrafted textile art of the Shui people of Guizhou, China. Each stitch is built around a strand of horsetail hair, wrapped in silk thread.">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<!-- Sui-script horse intro animation (replaces legacy loading screen) -->
+<script src="/js/intro.js"></script>
+
+<!-- Legacy loading screen kept in DOM but hidden by intro.js -->
+<div class="loading-screen" style="display:none">
+  <div class="loading-logo">Shui <em>Thread</em></div>
+  <div class="loading-logo-zh">水 · 丝 线</div>
+  <div class="loading-bar"></div>
+</div>
+
+<!-- Custom Cursor -->
+<div class="cursor-dot"></div>
+<div class="cursor-ring"></div>
+
+<!-- Navigation -->
+<nav class="site-nav">
+  <a href="/" class="nav-logo">
+    <span class="nav-logo-en">Shui Thread</span>
+    <span class="nav-logo-zh">水 · 丝 线 · 马 尾 绣</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="/" class="active">Home</a></li>
+    <li><a href="/shop.html">Shop</a></li>
+    <li><a href="/about.html">The Craft</a></li>
+  </ul>
+  <div style="display:flex;align-items:center;gap:1rem">
+    <button class="nav-cart-btn" data-cart-open aria-label="Open cart">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
+      Cart
+      <span class="cart-count" style="display:none">0</span>
+    </button>
+    <button class="nav-hamburger" aria-label="Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<!-- Cart Overlay -->
+<div class="cart-overlay"></div>
+
+<!-- Cart Panel -->
+<div class="cart-panel">
+  <div class="cart-panel-header">
+    <div class="cart-panel-title">Cart <span>购物车</span></div>
+    <button class="cart-close" aria-label="Close cart">✕</button>
+  </div>
+  <div class="cart-items"></div>
+  <div class="cart-panel-footer">
+    <div class="cart-subtotal">
+      <span class="cart-subtotal-label">Subtotal</span>
+      <span class="cart-subtotal-amount">£0</span>
+    </div>
+    <p class="cart-shipping-note">Free UK shipping · International shipping available</p>
+    <a href="/checkout.html" class="btn-checkout">
+      Proceed to Checkout →
+    </a>
+  </div>
+</div>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-text">
+    <div class="hero-eyebrow reveal">Guizhou, China · 贵州，中国</div>
+    <h1 class="hero-title reveal reveal-delay-1">
+      Living<br>
+      Thread
+    </h1>
+    <div class="hero-title-zh reveal reveal-delay-2">马 尾 绣 · Horsetail Hair Embroidery</div>
+    <p class="hero-desc reveal reveal-delay-3">
+      Each stitch is built around a strand of horsetail hair, wrapped in silk. A centuries-old art of the Shui people — still alive in every piece.
+    </p>
+    <div class="hero-actions reveal reveal-delay-4">
+      <a href="/shop.html" class="btn-primary">
+        Explore the Collection
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+      <a href="/about.html" class="btn-ghost">
+        The Craft
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+    </div>
+  </div>
+  <div class="hero-image">
+    <div class="hero-number">一</div>
+    <img src="/imgs/hero-frame.png"
+         alt="Shui horsetail hair embroidery — framed piece"
+         onerror="this.style.display='none'">
+    <div class="hero-image-overlay"></div>
+    <div class="hero-image-label">Horsetail · Silk · Time</div>
+  </div>
+</section>
+
+<!-- Marquee -->
+<div class="marquee-section" aria-hidden="true">
+  <div class="marquee-track">
+    <span class="marquee-item">水族马尾绣</span>
+    <span class="marquee-item marquee-dot">·</span>
+    <span class="marquee-item">Handcrafted in Guizhou</span>
+    <span class="marquee-item marquee-dot">·</span>
+    <span class="marquee-item">Horsetail Hair Embroidery</span>
+    <span class="marquee-item marquee-dot">·</span>
+    <span class="marquee-item">Living Heritage</span>
+    <span class="marquee-item marquee-dot">·</span>
+    <span class="marquee-item">每针每线皆有故事</span>
+    <span class="marquee-item marquee-dot">·</span>
+    <span class="marquee-item">UNESCO Intangible Heritage</span>
+    <span class="marquee-item marquee-dot">·</span>
+    <!-- duplicate for seamless loop -->
+    <span class="marquee-item">水族马尾绣</span>
+    <span class="marquee-item marquee-dot">·</span>
+    <span class="marquee-item">Handcrafted in Guizhou</span>
+    <span class="marquee-item marquee-dot">·</span>
+    <span class="marquee-item">Horsetail Hair Embroidery</span>
+    <span class="marquee-item marquee-dot">·</span>
+    <span class="marquee-item">Living Heritage</span>
+    <span class="marquee-item marquee-dot">·</span>
+    <span class="marquee-item">每针每线皆有故事</span>
+    <span class="marquee-item marquee-dot">·</span>
+    <span class="marquee-item">UNESCO Intangible Heritage</span>
+    <span class="marquee-item marquee-dot">·</span>
+  </div>
+</div>
+
+<!-- Featured Products -->
+<section class="section shop-section">
+  <div class="container">
+    <div class="section-header">
+      <div>
+        <div class="section-num">01</div>
+        <h2 class="section-title">The Collection</h2>
+        <div class="section-title-zh">藏 品</div>
+      </div>
+      <a href="/shop.html" class="btn-ghost">
+        View All
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+    </div>
+
+    <div class="product-grid" id="featured-products">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+</section>
+
+<!-- Story Section -->
+<section class="story-section">
+  <div class="story-inner">
+    <div class="story-image-col">
+      <img src="/imgs/ChatGPT Image 2026年3月29日 11_14_57.png"
+           alt="Shui embroidery detail"
+           onerror="this.style.display='none'">
+    </div>
+    <div class="story-text-col">
+      <div class="story-overline reveal">The People · 水 族</div>
+      <h2 class="story-heading reveal reveal-delay-1">
+        A people,<br>a living<br><em>language</em>
+      </h2>
+      <div class="story-heading-zh reveal reveal-delay-2">水族 · 活着的文化记忆</div>
+      <p class="story-body reveal reveal-delay-2">
+        The Shui people have lived in the mountains of southern Guizhou for over a thousand years — one of China's most ancient and least-known ethnic groups. They have their own written script, the Shui script, one of the world's few surviving pictographic writing systems. And they have their embroidery. For generations, Shui women have used horsetail hair embroidery not as decoration but as memory — encoding kinship, ritual, and the natural world into every stitch. Each motif is a word. Each piece, a story passed on without ever being spoken.
+      </p>
+      <div class="story-facts reveal reveal-delay-3">
+        <div>
+          <div class="fact-num">400+</div>
+          <div class="fact-label">Years of continuous tradition</div>
+        </div>
+        <div>
+          <div class="fact-num">40万</div>
+          <div class="fact-label">Shui people in China today</div>
+        </div>
+        <div>
+          <div class="fact-num">2006</div>
+          <div class="fact-label">National Intangible Heritage</div>
+        </div>
+        <div>
+          <div class="fact-num">黔南</div>
+          <div class="fact-label">Southern Guizhou, China</div>
+        </div>
+      </div>
+      <a href="/about.html" class="btn-primary reveal reveal-delay-4" style="align-self:flex-start">
+        Read the Full Story
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+    </div>
+  </div>
+</section>
+
+<!-- Indigo Dyeing Section -->
+<section class="indigo-section">
+  <div class="indigo-inner">
+    <div class="indigo-header">
+      <div class="section-num">02</div>
+      <h2 class="section-title">The Fabric</h2>
+      <div class="section-title-zh">布 料 · 蓝 靛</div>
+      <p class="indigo-intro">Before a single stitch, the cloth must become midnight. The Shui people dye their fabric by hand using indigo harvested from mountain fields — a four-step process unchanged for centuries.</p>
+    </div>
+
+    <div class="indigo-images">
+      <div class="indigo-img-wrap">
+        <img src="/imgs/indigo-plant.png" alt="Indigo plant — Strobilanthes cusia">
+      </div>
+      <div class="indigo-img-wrap">
+        <img src="/imgs/indigo-jar.png" alt="Indigo paste in earthenware jars">
+      </div>
+      <div class="indigo-img-wrap">
+        <img src="/imgs/indigo-dyeing.png" alt="Hand dyeing with indigo paste">
+      </div>
+    </div>
+
+    <div class="indigo-steps">
+      <div class="indigo-step">
+        <div class="indigo-step-num">01</div>
+        <div class="indigo-step-title">采 叶</div>
+        <div class="indigo-step-title-en">Harvest</div>
+        <p class="indigo-step-body">Leaves of the indigo plant — <em>Strobilanthes cusia</em> — are gathered by hand from the mountain fields of Guizhou each summer.</p>
+      </div>
+      <div class="indigo-step">
+        <div class="indigo-step-num">02</div>
+        <div class="indigo-step-title">浸 泡 · 发 酵</div>
+        <div class="indigo-step-title-en">Soak & Ferment</div>
+        <p class="indigo-step-body">Leaves steep in water for days, fermenting slowly. The liquid darkens as precursor pigments are released into solution.</p>
+      </div>
+      <div class="indigo-step">
+        <div class="indigo-step-num">03</div>
+        <div class="indigo-step-title">加 石 灰</div>
+        <div class="indigo-step-title-en">Add Lime</div>
+        <p class="indigo-step-body">Slaked lime shifts the pH of the vat, causing the indigo pigment to precipitate — falling from the water and settling at the bottom.</p>
+      </div>
+      <div class="indigo-step">
+        <div class="indigo-step-num">04</div>
+        <div class="indigo-step-title">蓝 靛 泥</div>
+        <div class="indigo-step-title-en">Indigo Paste</div>
+        <p class="indigo-step-body">The settled pigment is skimmed and packed into earthenware jars — a deep blue paste ready to dye cloth the colour of the midnight sky.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Made by Hand — Process Article -->
+<section class="process-section">
+
+  <!-- Hero banner -->
+  <div class="process-hero">
+    <img src="/imgs/artisan-making.png" alt="Shui artisan at work">
+    <div class="process-hero-overlay"></div>
+    <div class="process-hero-text">
+      <div class="process-eyebrow reveal">制 作 工 艺</div>
+      <h2 class="process-title reveal">Made<br>by <em>hand</em></h2>
+    </div>
+  </div>
+
+  <!-- Intro -->
+  <div class="process-intro">
+    <p class="reveal">
+      Every piece begins not with a needle, but with a pencil. The Shui artisan first sketches the motif by hand — bird, fish, or flower — directly onto the indigo-dyed cloth. Then comes the most distinctive step in all of Shui embroidery: winding fine silk thread around a single strand of horsetail hair, building a raised, sculptural core unlike anything else in textile art. Only then does the needle follow, laying each strand loop by loop into the fabric. It is slow, deliberate work. The smallest piece takes no fewer than eighty hours. No machines. No shortcuts. Patience is the craft.
+    </p>
+  </div>
+
+  <!-- Toggle -->
+  <div class="process-toggle-wrap">
+    <button class="process-toggle-btn" id="processToggle" aria-expanded="false">
+      <span class="process-toggle-label">了解更多</span>
+      <span class="process-toggle-label-en">The Process</span>
+      <svg class="process-toggle-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 9l6 6 6-6"/></svg>
+    </button>
+  </div>
+
+  <!-- Expandable detail -->
+  <div class="process-detail" id="processDetail">
+  <!-- 4 Process Steps -->
+  <div class="process-steps">
+
+    <div class="process-step reveal">
+      <div class="process-step-header">
+        <span class="process-step-num">01</span>
+        <div>
+          <div class="process-step-zh">手 稿</div>
+          <div class="process-step-en">The Sketch</div>
+        </div>
+      </div>
+      <div class="process-step-img">
+        <img src="/imgs/process-sketch.png" alt="Hand-drawn Shui embroidery sketch">
+      </div>
+      <p class="process-step-body">
+        Before any thread is touched, the design is drawn freehand onto the cloth — a bird, a fish, a vine. Motifs passed down through generations, redrawn each time by a different hand.
+      </p>
+    </div>
+
+    <div class="process-step reveal reveal-delay-1">
+      <div class="process-step-header">
+        <span class="process-step-num">02</span>
+        <div>
+          <div class="process-step-zh">缠 线</div>
+          <div class="process-step-en">Wrapping the Hair</div>
+        </div>
+      </div>
+      <div class="process-step-img">
+        <img src="/imgs/process-wrapping.png" alt="Wrapping silk thread around horsetail hair">
+      </div>
+      <p class="process-step-body">
+        Between 2 and 9 strands of horsetail hair are selected and bound together to form the inner core — the more strands used, the thicker the thread, and the more sculptural and three-dimensional the finished stitch.
+      </p>
+    </div>
+
+    <div class="process-step reveal reveal-delay-2">
+      <div class="process-step-header">
+        <span class="process-step-num">03</span>
+        <div>
+          <div class="process-step-zh">刺 绣</div>
+          <div class="process-step-en">The Stitching</div>
+        </div>
+      </div>
+      <div class="process-step-img">
+        <img src="/imgs/process-stitching.png" alt="Needle stitching on indigo fabric">
+      </div>
+      <p class="process-step-body">
+        The needle follows the sketch, threading the silk-wrapped hair into the fabric loop by loop. The work is done by feel as much as sight — each stitch placed by a hand that has made this motion ten thousand times.
+      </p>
+    </div>
+
+    <div class="process-step reveal reveal-delay-3">
+      <div class="process-step-header">
+        <span class="process-step-num">04</span>
+        <div>
+          <div class="process-step-zh">成 品</div>
+          <div class="process-step-en">The Finished Piece</div>
+        </div>
+      </div>
+      <div class="process-step-img">
+        <img src="/imgs/process-finished.png" alt="Finished Shui embroidery — close-up detail">
+      </div>
+      <p class="process-step-body">
+        Eighty hours or more of work, held in a 10 × 10 centimetre frame. The motif that began as a pencil line on cloth has become something sculptural — raised, tactile, unmistakably alive.
+      </p>
+    </div>
+
+  </div>
+
+  <div class="process-cta reveal">
+    <a href="/shop.html" class="btn-primary">
+      Shop Handmade Pieces
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </a>
+  </div>
+  </div><!-- /process-detail -->
+
+</section>
+
+<!-- Teal Block -->
+<section class="feature-block teal-block">
+  <div class="feature-block-visual reveal" style="padding:0;overflow:hidden;border-radius:2px;">
+    <img src="/imgs/motif-butterfly-fish.png" alt="Shui embroidery — butterfly, fish and vine motifs" style="width:100%;height:100%;object-fit:cover;object-position:center;">
+  </div>
+  <div class="feature-block-text">
+    <div class="t-display reveal">
+      Every<br>motif<br><em>speaks</em>
+    </div>
+    <p class="feature-block-body reveal reveal-delay-1">
+      Shui embroidery is a symbolic language. Fish bring abundance. Butterflies carry transformation. The vine signals continuity. When you carry a piece, you carry its meaning.
+    </p>
+    <a href="/about.html" class="btn-white reveal reveal-delay-2">
+      Learn the Symbols
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </a>
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="site-footer">
+  <div class="footer-grid">
+    <div class="footer-brand">
+      <div class="nav-logo">
+        <span class="nav-logo-en">Shui Thread</span>
+        <span class="nav-logo-zh">水 · 丝 线 · 马 尾 绣</span>
+      </div>
+      <p class="footer-tagline">
+        Horsetail hair embroidery from the Shui people of Guizhou, China. Preserving a rare living tradition through contemporary handmade works.
+      </p>
+    </div>
+    <div class="footer-col">
+      <h4>Shop</h4>
+      <ul>
+        <li><a href="/shop.html">All Pieces</a></li>
+        <li><a href="/shop.html?cat=accessories">Accessories</a></li>
+        <li><a href="/shop.html?cat=textile">Textiles</a></li>
+        <li><a href="/shop.html?cat=home">Home</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h4>About</h4>
+      <ul>
+        <li><a href="/about.html">The Craft</a></li>
+        <li><a href="/about.html#artisans">The Artisans</a></li>
+        <li><a href="/about.html#heritage">Heritage</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-copy">© 2026 Shui Thread · 水·丝线 · All rights reserved</div>
+    <div class="footer-copy">Handmade in Sandu, Guizhou · 制于贵州三都</div>
+  </div>
+</footer>
+
+<script>
+// Process section toggle
+document.getElementById('processToggle').addEventListener('click', function() {
+  const detail = document.getElementById('processDetail');
+  const expanded = this.getAttribute('aria-expanded') === 'true';
+  this.setAttribute('aria-expanded', !expanded);
+  detail.classList.toggle('open', !expanded);
+});
+</script>
+<script src="/js/cart.js"></script>
+<script>
+// Load featured products from API
+(async () => {
+  try {
+    const res = await fetch('/api/products');
+    const products = await res.json();
+    const grid = document.getElementById('featured-products');
+    // Show first 3 products
+    grid.innerHTML = products.slice(0, 3).map((p, i) => `
+      <div class="product-card reveal reveal-delay-${i+1}">
+        <div class="product-image-wrap">
+          ${p.img ? `<img src="${p.img}" alt="${p.name}" onerror="this.parentElement.classList.add('placeholder-${i+1}')">` : `<div class="product-image-placeholder placeholder-${i+1}"><svg width="60" height="60" viewBox="0 0 60 60" fill="none" opacity="0.2"><circle cx="30" cy="30" r="25" stroke="white" stroke-width="1"/><circle cx="30" cy="30" r="10" stroke="white" stroke-width="1"/></svg></div>`}
+        </div>
+        <div class="product-info">
+          <div class="product-category">10cm × 10cm · Framed</div>
+          <div class="product-name">${p.name}</div>
+          <div class="product-name-zh">${p.nameZh}</div>
+          <div class="product-price-row">
+            <span class="product-price">£${p.priceGBP}</span>
+          </div>
+        </div>
+        <div class="product-hover-actions">
+          <a href="/product.html?id=${p.id}" class="product-hover-btn">View</a>
+          <button class="product-hover-btn" onclick='Cart.addItem(${JSON.stringify(p).replace(/'/g, "&#39;")})'>Add to Cart</button>
+        </div>
+      </div>
+    `).join('');
+    // Re-run reveal
+    initScrollReveal();
+  } catch(e) {
+    console.error('Could not load products', e);
+  }
+})();
+</script>
+</body>
+</html>
