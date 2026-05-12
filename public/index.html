@@ -6,18 +6,9 @@
   <title>Shui Thread — 水·丝线 Horsetail Hair Embroidery</title>
   <meta name="description" content="Handcrafted textile art of the Shui people of Guizhou, China. Each stitch is built around a strand of horsetail hair, wrapped in silk thread.">
   <link rel="stylesheet" href="/css/style.css">
+  <script src="/js/intro.js"></script>
 </head>
 <body>
-
-<!-- Sui-script horse intro animation (replaces legacy loading screen) -->
-<script src="/js/intro.js"></script>
-
-<!-- Legacy loading screen kept in DOM but hidden by intro.js -->
-<div class="loading-screen" style="display:none">
-  <div class="loading-logo">Shui <em>Thread</em></div>
-  <div class="loading-logo-zh">水 · 丝 线</div>
-  <div class="loading-bar"></div>
-</div>
 
 <!-- Custom Cursor -->
 <div class="cursor-dot"></div>
@@ -422,6 +413,7 @@ document.getElementById('processToggle').addEventListener('click', function() {
 });
 </script>
 <script src="/js/cart.js"></script>
+<script src="/js/effects.js"></script>
 <script>
 // Load featured products from API
 (async () => {
