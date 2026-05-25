@@ -141,12 +141,9 @@ app.post('/api/create-checkout-session', async (req, res) => {
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
       line_items: lineItems,
-      shipping_address_collection: {
-        allowed_countries: ['GB', 'US', 'DE', 'FR', 'AU', 'JP', 'SG', 'HK', 'CN', 'TW', 'CA', 'NL', 'IT', 'ES']
-      },
+      shipping_address_collection: { allowed_countries: ['GB'] },
       shipping_options: [
-        { shipping_rate_data: { display_name: 'Standard (UK)', type: 'fixed_amount', fixed_amount: { amount: 0, currency: 'gbp' } } },
-        { shipping_rate_data: { display_name: 'International', type: 'fixed_amount', fixed_amount: { amount: 1500, currency: 'gbp' } } }
+        { shipping_rate_data: { display_name: 'UK Standard Delivery', type: 'fixed_amount', fixed_amount: { amount: 0, currency: 'gbp' }, delivery_estimate: { minimum: { unit: 'business_day', value: 3 }, maximum: { unit: 'business_day', value: 7 } } } }
       ],
       phone_number_collection: { enabled: true },
       success_url: `${origin}/success.html?session_id={CHECKOUT_SESSION_ID}`,
