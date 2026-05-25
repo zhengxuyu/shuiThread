@@ -75,7 +75,7 @@
       <div class="stitch-intro__divider" aria-hidden="true"></div>
 
       <section class="stitch-intro__col stitch-intro__col--copy">
-        <div class="stitch-intro__overline">Edition I · MMXXVI</div>
+        <div class="stitch-intro__overline">Est. 2026 · Guizhou</div>
         <h1 class="stitch-intro__lede">
           <span class="l1">A film about</span>
           <em class="l2">one strand</em>
