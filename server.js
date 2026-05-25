@@ -105,31 +105,56 @@ app.get('/api/products/:id', (req, res) => {
   res.json(product);
 });
 
-// Payment intent endpoint
-app.post('/api/create-payment-intent', async (req, res) => {
-  const { amount, currency = 'cny', items } = req.body;
+// Stripe Checkout Session — server resolves prices from catalog, never trusts client
+app.post('/api/create-checkout-session', async (req, res) => {
+  const { items } = req.body || {};
+  if (!Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ error: 'No items in cart' });
+  }
 
-  // Check if Stripe is configured
-  if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY.includes('your_stripe')) {
-    // Return mock payment for demo mode
-    return res.json({
-      demo: true,
-      clientSecret: 'demo_secret_' + Date.now(),
-      message: 'Demo mode: No Stripe keys configured'
+  const lineItems = [];
+  for (const { id, qty } of items) {
+    const product = products.find(p => p.id === id);
+    if (!product) return res.status(400).json({ error: `Unknown product ${id}` });
+    const quantity = Math.max(1, Math.min(parseInt(qty, 10) || 1, product.stock || 1));
+    lineItems.push({
+      price_data: {
+        currency: 'gbp',
+        unit_amount: Math.round(product.priceGBP * 100),
+        product_data: {
+          name: product.name,
+          description: product.nameZh,
+          images: product.img ? [`${req.protocol}://${req.get('host')}${product.img}`] : []
+        }
+      },
+      quantity
     });
+  }
+
+  if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY.includes('your_stripe')) {
+    return res.json({ demo: true, message: 'Demo mode: STRIPE_SECRET_KEY not configured' });
   }
 
   try {
     const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
-    const paymentIntent = await stripe.paymentIntents.create({
-      amount: Math.round(amount * 100), // convert to cents/fen
-      currency,
-      metadata: {
-        items: JSON.stringify(items)
-      }
+    const origin = `${req.protocol}://${req.get('host')}`;
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      line_items: lineItems,
+      shipping_address_collection: {
+        allowed_countries: ['GB', 'US', 'DE', 'FR', 'AU', 'JP', 'SG', 'HK', 'CN', 'TW', 'CA', 'NL', 'IT', 'ES']
+      },
+      shipping_options: [
+        { shipping_rate_data: { display_name: 'Standard (UK)', type: 'fixed_amount', fixed_amount: { amount: 0, currency: 'gbp' } } },
+        { shipping_rate_data: { display_name: 'International', type: 'fixed_amount', fixed_amount: { amount: 1500, currency: 'gbp' } } }
+      ],
+      phone_number_collection: { enabled: true },
+      success_url: `${origin}/success.html?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${origin}/checkout.html`
     });
-    res.json({ clientSecret: paymentIntent.client_secret });
+    res.json({ url: session.url });
   } catch (err) {
+    console.error('Stripe error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });
