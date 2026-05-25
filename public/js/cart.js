@@ -52,7 +52,7 @@ const Cart = (() => {
   }
 
   function getTotal() {
-    return getCart().reduce((sum, i) => sum + i.price * i.qty, 0);
+    return getCart().reduce((sum, i) => sum + (i.priceGBP || 0) * i.qty, 0);
   }
 
   function getCount() {
@@ -158,7 +158,7 @@ function renderCartPanel() {
         <a class="cart-item-remove" onclick="removeCartItem('${item.id}')">Remove</a>
       </div>
       <div>
-        <div class="cart-item-price">¥${(item.price * item.qty).toLocaleString()}</div>
+        <div class="cart-item-price">£${(item.priceGBP * item.qty)}</div>
       </div>
     </div>
   `).join('');
@@ -168,7 +168,7 @@ function renderCartPanel() {
 
 function updatePanelFooter(total) {
   const amountEl = document.querySelector('.cart-subtotal-amount');
-  if (amountEl) amountEl.textContent = `¥${total.toLocaleString()}`;
+  if (amountEl) amountEl.textContent = `£${total}`;
 }
 
 function changeQty(id, qty) {
