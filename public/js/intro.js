@@ -26,13 +26,13 @@
 
     <svg class="stitch-intro__svg" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <defs>
-        <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0"   stop-color="#f9e0b1"/>
-          <stop offset="0.45" stop-color="#e8b56a"/>
-          <stop offset="1"   stop-color="#c47326"/>
+        <linearGradient id="threadStroke" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0"    stop-color="#0D0D0D"/>
+          <stop offset="0.55" stop-color="#2A2A2A"/>
+          <stop offset="1"    stop-color="#D94E1F"/>
         </linearGradient>
         <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation="2.4" result="b"/>
+          <feGaussianBlur stdDeviation="1.4" result="b"/>
           <feMerge>
             <feMergeNode in="b"/>
             <feMergeNode in="SourceGraphic"/>
@@ -41,8 +41,8 @@
       </defs>
 
       <g class="stitch-intro__butterfly"
-         stroke="url(#gold)" fill="none"
-         stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"
+         stroke="url(#threadStroke)" fill="none"
+         stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"
          filter="url(#glow)">
         <!-- Body -->
         <path class="seg s-body" pathLength="100"
