@@ -389,6 +389,22 @@ body:hover .cursor-dot { opacity: 1; }
 .marquee-dot {
   color: rgba(255,255,255,0.5);
 }
+/* Wide cinematic banner — sits between marquee and The Collection */
+.horse-banner {
+  width: 100%;
+  overflow: hidden;
+  background: var(--cream);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+.horse-banner img {
+  display: block;
+  width: 100%;
+  height: clamp(280px, 38vw, 560px);
+  object-fit: cover;
+  object-position: center 35%;
+}
+
 @keyframes marquee {
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }
