@@ -19,7 +19,7 @@
   </a>
   <ul class="nav-links">
     <li><a href="/">Home</a></li>
-    <li><a href="/shop.html">Shop</a></li>
+    <li><a href="/collection.html">Collection</a></li>
     <li><a href="/about.html">The Craft</a></li>
   </ul>
   <div style="display:flex;align-items:center;gap:1rem">
@@ -80,8 +80,8 @@
       </div>
     </div>
     <div class="footer-col">
-      <h4>Shop</h4>
-      <ul><li><a href="/shop.html">All Pieces</a></li></ul>
+      <h4>Collection</h4>
+      <ul><li><a href="/collection.html">All Pieces</a></li></ul>
     </div>
     <div class="footer-col">
       <h4>About</h4>
@@ -103,7 +103,7 @@ const CONTACT_EMAIL = 'shuithread@hotmail.com';
 
 (async () => {
   const id = new URLSearchParams(location.search).get('id');
-  if (!id) { window.location.href = '/shop.html'; return; }
+  if (!id) { window.location.href = '/collection.html'; return; }
 
   try {
     const [productRes, allRes] = await Promise.all([
@@ -124,9 +124,9 @@ const CONTACT_EMAIL = 'shuithread@hotmail.com';
             : `<div style="width:100%;height:100%;background:var(--teal);display:flex;align-items:center;justify-content:center;"><svg width="80" height="80" viewBox="0 0 80 80" fill="none" opacity="0.2"><circle cx="40" cy="40" r="34" stroke="white" stroke-width="1.5"/><circle cx="40" cy="40" r="14" stroke="white" stroke-width="1.5"/></svg></div>`}
         </div>
         <div class="product-detail-info">
-          <a href="/shop.html" class="product-detail-back">
+          <a href="/collection.html" class="product-detail-back">
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
-            Back to Shop
+            Back to Collection
           </a>
           <div class="product-detail-category">${product.category}</div>
           <h1 class="product-detail-title">${product.name}</h1>

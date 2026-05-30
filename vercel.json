@@ -6,6 +6,8 @@
   ],
   "routes": [
     { "src": "/api/(.*)", "dest": "/api/index.js" },
+    { "src": "/shop\\.html(\\?.*)?", "status": 301, "headers": { "Location": "/collection.html" } },
+    { "src": "/shop/?", "status": 301, "headers": { "Location": "/collection.html" } },
     { "src": "/", "dest": "/public/index.html" },
     { "src": "/(.+\\.(html|png|jpg|jpeg|svg|ico|webp|css|js))", "dest": "/public/$1" },
     { "src": "/(imgs|css|js)/(.*)", "dest": "/public/$1/$2" },
