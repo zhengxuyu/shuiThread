@@ -13,7 +13,7 @@ function renderCheckoutSummary() {
   if (!container) return;
 
   if (cart.length === 0) {
-    window.location.href = '/shop.html';
+    window.location.href = '/collection.html';
     return;
   }
 
@@ -38,7 +38,7 @@ function renderCheckoutSummary() {
 async function payWithStripe() {
   const btn = document.getElementById('pay-btn');
   const cart = Cart.getCart();
-  if (cart.length === 0) { window.location.href = '/shop.html'; return; }
+  if (cart.length === 0) { window.location.href = '/collection.html'; return; }
 
   btn.disabled = true;
   btn.textContent = 'Redirecting to Stripe…';
