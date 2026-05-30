@@ -389,20 +389,76 @@ body:hover .cursor-dot { opacity: 1; }
 .marquee-dot {
   color: rgba(255,255,255,0.5);
 }
-/* Wide cinematic banner — sits between marquee and The Collection */
-.horse-banner {
-  width: 100%;
-  overflow: hidden;
+/* Shui Horse Racing — side-by-side feature between marquee and The Collection */
+.horse-story {
   background: var(--cream);
+  color: var(--ink);
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
+  overflow: hidden;
 }
-.horse-banner img {
-  display: block;
+.horse-story__inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 70vh;
+}
+.horse-story__img-col {
+  position: relative;
+  overflow: hidden;
+  background: var(--cream);
+}
+.horse-story__img-col img {
   width: 100%;
-  height: clamp(280px, 38vw, 560px);
+  height: 100%;
   object-fit: cover;
   object-position: center 35%;
+  display: block;
+}
+.horse-story__text-col {
+  padding: clamp(3rem, 7vw, 7rem) clamp(2.5rem, 6vw, 6rem) clamp(3rem, 7vw, 7rem) clamp(2rem, 5vw, 5rem);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.horse-story__overline {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--orange);
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+.horse-story__overline::before { content: '——'; opacity: 0.5; }
+.horse-story__heading {
+  font-family: var(--font-display);
+  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  line-height: 1.0;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+  margin: 0 0 0.5rem;
+}
+.horse-story__heading em { color: var(--orange); font-style: italic; }
+.horse-story__heading-zh {
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  letter-spacing: 0.3em;
+  color: var(--ink-muted);
+  margin-bottom: 2rem;
+}
+.horse-story__body {
+  font-size: 1rem;
+  line-height: 1.85;
+  color: var(--ink-soft);
+  max-width: 42ch;
+  margin: 0;
+}
+@media (max-width: 880px) {
+  .horse-story__inner { grid-template-columns: 1fr; }
+  .horse-story__img-col { height: 70vw; }
+  .horse-story__text-col { padding: 3rem 1.5rem; }
 }
 
 @keyframes marquee {
