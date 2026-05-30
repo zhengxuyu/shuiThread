@@ -4,6 +4,12 @@
 //  Pure SVG + CSS. No external dependencies.
 // ════════════════════════════════════════════════════════════════
 (function () {
+  // ── Intro toggle ──────────────────────────────────────────────
+  // Flip to true to re-enable the stitched butterfly opening.
+  // Rest of the implementation is preserved below.
+  const INTRO_ENABLED = false;
+  if (!INTRO_ENABLED) return;
+
   const ONCE_PER_SESSION = true;
   const SESSION_KEY = 'shui_intro_seen';
   const AUTO_DISMISS_MS = 8500;
