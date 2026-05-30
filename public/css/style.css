@@ -389,17 +389,20 @@ body:hover .cursor-dot { opacity: 1; }
 .marquee-dot {
   color: rgba(255,255,255,0.5);
 }
-/* Shui Horse Racing — full-bleed landscape, text overlay on right.
-   The horse image (1536×1024) becomes the section background; the
-   rider sits at center-left of the source, so left-aligning the bg
-   keeps him in the left half while the painted landscape continues
-   into the right column where the type overlays. */
+/* Shui Horse Racing — image kept whole on the left at natural aspect;
+   the right side fills with a warm parchment that picks up the
+   image's misty-mountain edge, so the landscape reads as continuous. */
 .horse-story {
   position: relative;
-  background-image: url('/imgs/shuihorse.png');
-  background-size: cover;
-  background-position: left center;
-  background-repeat: no-repeat;
+  /* Parchment tone close to the image's right-edge wash so the seam blends. */
+  background-color: #efe3c2;
+  background-image:
+    /* gentle fade at the right side of the image into the parchment */
+    linear-gradient(to right, transparent 0%, transparent 60%, #efe3c2 100%),
+    url('/imgs/shuihorse.png');
+  background-size: auto 100%, auto 100%;
+  background-position: left center, left center;
+  background-repeat: no-repeat, no-repeat;
   color: var(--ink);
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
@@ -409,24 +412,9 @@ body:hover .cursor-dot { opacity: 1; }
   position: relative;
   display: grid;
   grid-template-columns: 1fr 1fr;
-  min-height: 70vh;
+  min-height: clamp(380px, 46vw, 640px);  /* matches image natural 3:2 at common widths */
 }
-/* Soft scrim on the right half so type stays readable over the
-   landscape — fades from transparent at the seam to ~92% cream. */
-.horse-story__inner::before {
-  content: '';
-  position: absolute;
-  inset: 0 0 0 45%;
-  background: linear-gradient(
-    to right,
-    rgba(247,243,237,0)    0%,
-    rgba(247,243,237,0.55) 30%,
-    rgba(247,243,237,0.85) 65%,
-    rgba(247,243,237,0.92) 100%
-  );
-  pointer-events: none;
-}
-.horse-story__spacer { /* keeps left half empty so the bg shows */ }
+.horse-story__spacer { /* left col empty so the bg image shows through */ }
 .horse-story__text-col {
   position: relative;
   z-index: 1;
@@ -471,12 +459,14 @@ body:hover .cursor-dot { opacity: 1; }
   margin: 0;
 }
 @media (max-width: 880px) {
-  /* On mobile the rider crops out at the side, so give it some space
-     above the type and let the scrim cover the whole inner block. */
-  .horse-story { background-position: center top; min-height: 0; }
+  /* Mobile: image fills the width at natural aspect on top, text below. */
+  .horse-story {
+    background-image: linear-gradient(to bottom, transparent 0%, transparent 80%, #efe3c2 100%), url('/imgs/shuihorse.png');
+    background-size: 100% auto, 100% auto;
+    background-position: top center, top center;
+  }
   .horse-story__inner { grid-template-columns: 1fr; min-height: 0; }
-  .horse-story__inner::before { inset: 35% 0 0 0; background: linear-gradient(to bottom, rgba(247,243,237,0) 0%, rgba(247,243,237,0.9) 45%, rgba(247,243,237,0.96) 100%); }
-  .horse-story__spacer { height: 55vw; }
+  .horse-story__spacer { height: 67vw; } /* image natural 1536:1024 ≈ 2:3 inverted */
   .horse-story__text-col { padding: 2.5rem 1.5rem 3rem; }
 }
 
