@@ -400,9 +400,7 @@ body:hover .cursor-dot { opacity: 1; }
 .horse-banner img {
   display: block;
   width: 100%;
-  height: clamp(280px, 38vw, 560px);
-  object-fit: cover;
-  object-position: center 35%;
+  height: auto;          /* keep entire image — no top/bottom crop */
 }
 
 @keyframes marquee {
