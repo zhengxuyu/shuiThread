@@ -54,8 +54,8 @@ const products = [
   },
   {
     id: 'p005',
-    name: 'Twin Pomegranate Frame',
-    nameZh: '双石榴马尾绣相框',
+    name: 'Pomegranate Frame',
+    nameZh: '石榴马尾绣相框',
     priceGBP: 85,
     description: 'Two pomegranate blossoms intertwine in teal and crimson silk, their stems curling outward in traditional Shui scrollwork. A classic motif of fertility and celebration. Framed and ready to hang. 12 × 12 × 3 cm.',
     category: 'frame',
