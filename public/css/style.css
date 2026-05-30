@@ -389,32 +389,47 @@ body:hover .cursor-dot { opacity: 1; }
 .marquee-dot {
   color: rgba(255,255,255,0.5);
 }
-/* Shui Horse Racing — side-by-side feature between marquee and The Collection */
+/* Shui Horse Racing — full-bleed landscape, text overlay on right.
+   The horse image (1536×1024) becomes the section background; the
+   rider sits at center-left of the source, so left-aligning the bg
+   keeps him in the left half while the painted landscape continues
+   into the right column where the type overlays. */
 .horse-story {
-  background: var(--cream);
+  position: relative;
+  background-image: url('/imgs/shuihorse.png');
+  background-size: cover;
+  background-position: left center;
+  background-repeat: no-repeat;
   color: var(--ink);
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
   overflow: hidden;
 }
 .horse-story__inner {
+  position: relative;
   display: grid;
   grid-template-columns: 1fr 1fr;
   min-height: 70vh;
 }
-.horse-story__img-col {
-  position: relative;
-  overflow: hidden;
-  background: var(--cream);
+/* Soft scrim on the right half so type stays readable over the
+   landscape — fades from transparent at the seam to ~92% cream. */
+.horse-story__inner::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 0 45%;
+  background: linear-gradient(
+    to right,
+    rgba(247,243,237,0)    0%,
+    rgba(247,243,237,0.55) 30%,
+    rgba(247,243,237,0.85) 65%,
+    rgba(247,243,237,0.92) 100%
+  );
+  pointer-events: none;
 }
-.horse-story__img-col img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center 35%;
-  display: block;
-}
+.horse-story__spacer { /* keeps left half empty so the bg shows */ }
 .horse-story__text-col {
+  position: relative;
+  z-index: 1;
   padding: clamp(3rem, 7vw, 7rem) clamp(2.5rem, 6vw, 6rem) clamp(3rem, 7vw, 7rem) clamp(2rem, 5vw, 5rem);
   display: flex;
   flex-direction: column;
@@ -456,9 +471,13 @@ body:hover .cursor-dot { opacity: 1; }
   margin: 0;
 }
 @media (max-width: 880px) {
-  .horse-story__inner { grid-template-columns: 1fr; }
-  .horse-story__img-col { height: 70vw; }
-  .horse-story__text-col { padding: 3rem 1.5rem; }
+  /* On mobile the rider crops out at the side, so give it some space
+     above the type and let the scrim cover the whole inner block. */
+  .horse-story { background-position: center top; min-height: 0; }
+  .horse-story__inner { grid-template-columns: 1fr; min-height: 0; }
+  .horse-story__inner::before { inset: 35% 0 0 0; background: linear-gradient(to bottom, rgba(247,243,237,0) 0%, rgba(247,243,237,0.9) 45%, rgba(247,243,237,0.96) 100%); }
+  .horse-story__spacer { height: 55vw; }
+  .horse-story__text-col { padding: 2.5rem 1.5rem 3rem; }
 }
 
 @keyframes marquee {
