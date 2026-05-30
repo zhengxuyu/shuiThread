@@ -45,10 +45,14 @@
     }
     .process-steps {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      grid-template-columns: repeat(3, 1fr);
       gap: 0;
       margin-top: 3rem;
       border: 1px solid var(--border);
+    }
+    @media (max-width: 720px) {
+      .process-steps { grid-template-columns: 1fr; }
+      .process-step { border-right: none; }
     }
     .process-step {
       padding: 2.5rem 2rem;
