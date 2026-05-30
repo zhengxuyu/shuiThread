@@ -389,36 +389,45 @@ body:hover .cursor-dot { opacity: 1; }
 .marquee-dot {
   color: rgba(255,255,255,0.5);
 }
-/* Shui Horse Racing — image kept whole on the left at natural aspect;
-   the right side fills with a warm parchment that picks up the
-   image's misty-mountain edge, so the landscape reads as continuous. */
+/* Shui Horse Racing — the image keeps its natural aspect on the
+   left; its right edge is feathered to transparent via mask-image,
+   and the section background is a vertical gradient sampled from
+   the image's right edge (cool cream → warm tan) so the painted
+   landscape dissolves into the parchment with no visible seam. */
 .horse-story {
   position: relative;
-  /* Parchment tone close to the image's right-edge wash so the seam blends. */
-  background-color: #efe3c2;
-  background-image:
-    /* gentle fade at the right side of the image into the parchment */
-    linear-gradient(to right, transparent 0%, transparent 60%, #efe3c2 100%),
-    url('/imgs/shuihorse.png');
-  background-size: auto 100%, auto 100%;
-  background-position: left center, left center;
-  background-repeat: no-repeat, no-repeat;
+  display: grid;
+  grid-template-columns: minmax(0, auto) 1fr;
+  align-items: stretch;
+  min-height: clamp(380px, 46vw, 640px);
+  background: linear-gradient(
+    180deg,
+    #ecdcca 0%,
+    #faefdb 18%,
+    #f4e7d6 38%,
+    #efdbbd 58%,
+    #f7eacc 80%,
+    #ebcd98 100%
+  );
   color: var(--ink);
   border-top: 1px solid var(--border);
   border-bottom: 1px solid var(--border);
   overflow: hidden;
 }
-.horse-story__inner {
-  position: relative;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  min-height: clamp(380px, 46vw, 640px);  /* matches image natural 3:2 at common widths */
+.horse-story__img {
+  display: block;
+  height: 100%;
+  width: auto;
+  max-width: 65%;
+  object-fit: contain;
+  object-position: left center;
+  -webkit-mask-image: linear-gradient(to right, #000 0%, #000 72%, transparent 100%);
+          mask-image: linear-gradient(to right, #000 0%, #000 72%, transparent 100%);
 }
-.horse-story__spacer { /* left col empty so the bg image shows through */ }
 .horse-story__text-col {
   position: relative;
   z-index: 1;
-  padding: clamp(3rem, 7vw, 7rem) clamp(2.5rem, 6vw, 6rem) clamp(3rem, 7vw, 7rem) clamp(2rem, 5vw, 5rem);
+  padding: clamp(3rem, 7vw, 7rem) clamp(2.5rem, 6vw, 6rem) clamp(3rem, 7vw, 7rem) clamp(1rem, 2vw, 2rem);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -459,15 +468,21 @@ body:hover .cursor-dot { opacity: 1; }
   margin: 0;
 }
 @media (max-width: 880px) {
-  /* Mobile: image fills the width at natural aspect on top, text below. */
+  /* Mobile: image up top at natural aspect (width:100%), bottom edge
+     feathers down into the parchment gradient; text below. */
   .horse-story {
-    background-image: linear-gradient(to bottom, transparent 0%, transparent 80%, #efe3c2 100%), url('/imgs/shuihorse.png');
-    background-size: 100% auto, 100% auto;
-    background-position: top center, top center;
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto;
+    min-height: 0;
   }
-  .horse-story__inner { grid-template-columns: 1fr; min-height: 0; }
-  .horse-story__spacer { height: 67vw; } /* image natural 1536:1024 ≈ 2:3 inverted */
-  .horse-story__text-col { padding: 2.5rem 1.5rem 3rem; }
+  .horse-story__img {
+    width: 100%;
+    height: auto;
+    max-width: none;
+    -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 80%, transparent 100%);
+            mask-image: linear-gradient(to bottom, #000 0%, #000 80%, transparent 100%);
+  }
+  .horse-story__text-col { padding: 1.5rem 1.5rem 3rem; }
 }
 
 @keyframes marquee {
