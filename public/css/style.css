@@ -176,6 +176,12 @@ body:hover .cursor-dot { opacity: 1; }
 .nav-links a.active { color: var(--orange); }
 .nav-links a.active::after { transform: scaleX(1); }
 
+/* Commerce currently off — see COMMERCE_ENABLED in shop/index/product.html.
+   To restore the cart UI, delete this block. */
+.nav-cart-btn,
+.cart-overlay,
+.cart-panel { display: none !important; }
+
 .nav-cart-btn {
   display: flex;
   align-items: center;
