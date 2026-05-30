@@ -95,6 +95,12 @@
 
 <script src="/js/cart.js"></script>
 <script>
+// ── Commerce toggle ───────────────────────────────────────────
+// Flip to true to restore price + Add-to-Cart UI. Original
+// implementation is preserved below, gated on this flag.
+const COMMERCE_ENABLED = false;
+const CONTACT_EMAIL = 'shuithread@hotmail.com';
+
 (async () => {
   const id = new URLSearchParams(location.search).get('id');
   if (!id) { window.location.href = '/shop.html'; return; }
@@ -125,13 +131,20 @@
           <div class="product-detail-category">${product.category}</div>
           <h1 class="product-detail-title">${product.name}</h1>
           <div class="product-detail-title-zh">${product.nameZh}</div>
-          <div class="product-detail-price">£${product.priceGBP}</div>
+          ${COMMERCE_ENABLED
+            ? `<div class="product-detail-price">£${product.priceGBP}</div>`
+            : `<div class="product-detail-price product-collection-tag">藏 品 · Collection Piece</div>`}
           <p class="product-detail-desc">${product.description}</p>
+          ${COMMERCE_ENABLED ? `
           <button class="product-detail-add btn-primary"
             onclick='Cart.addItem(${JSON.stringify(product).replace(/'/g,"&#39;")}); showToast("Added to cart")'>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
             Add to Cart — £${product.priceGBP}
-          </button>
+          </button>` : `
+          <a class="product-detail-add btn-primary" href="mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent('Inquiry: ' + product.name)}">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+            Contact Us · 联系我们
+          </a>`}
           <div style="font-family:var(--font-mono);font-size:0.68rem;letter-spacing:0.1em;color:var(--ink-muted);display:flex;gap:2rem;flex-wrap:wrap;border-top:1px solid var(--border);padding-top:1.5rem;margin-top:0.5rem">
             <span>📦 Ships within 5–10 days</span>
             <span>✦ Handmade · One of a kind</span>
@@ -154,13 +167,19 @@
             <div class="product-category">${p.category}</div>
             <div class="product-name">${p.name}</div>
             <div class="product-name-zh">${p.nameZh}</div>
+            ${COMMERCE_ENABLED ? `
             <div class="product-price-row">
               <span class="product-price">£${p.priceGBP}</span>
-            </div>
+            </div>` : `
+            <div class="product-price-row">
+              <span class="product-price product-collection-tag">藏 品 · Collection</span>
+            </div>`}
           </div>
           <div class="product-hover-actions">
             <a href="/product.html?id=${p.id}" class="product-hover-btn">View</a>
-            <button class="product-hover-btn" onclick='Cart.addItem(${JSON.stringify(p).replace(/'/g,"&#39;")})'>Add</button>
+            ${COMMERCE_ENABLED
+              ? `<button class="product-hover-btn" onclick='Cart.addItem(${JSON.stringify(p).replace(/'/g,"&#39;")})'>Add</button>`
+              : `<a class="product-hover-btn" href="mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent('Inquiry: ' + p.name)}">Contact</a>`}
           </div>
         </div>
       `).join('');

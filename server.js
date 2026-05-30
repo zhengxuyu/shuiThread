@@ -17,7 +17,7 @@ const products = [
     name: 'Butterfly Frame',
     nameZh: '蝴蝶马尾绣相框',
     priceGBP: 85,
-    description: 'A butterfly rendered in vivid orange and teal silk thread over horsetail hair, set on midnight-black fabric. The butterfly is a Shui symbol of transformation and beauty. Framed and ready to hang. 10cm × 10cm.',
+    description: 'A butterfly rendered in vivid orange and teal silk thread over horsetail hair, set on midnight-black fabric. The butterfly is a Shui symbol of transformation and beauty. Framed and ready to hang. 12 × 12 × 3 cm.',
     category: 'frame',
     img: '/imgs/butterfly.png',
     stock: 1
@@ -27,7 +27,7 @@ const products = [
     name: 'Whale Frame',
     nameZh: '鲸鱼马尾绣相框',
     priceGBP: 85,
-    description: 'An orange whale breaches the surface, its spray forming delicate scrolling fronds in cream silk. A rare Shui maritime motif — vitality and the abundance of the natural world. Framed and ready to hang. 10cm × 10cm.',
+    description: 'An orange whale breaches the surface, its spray forming delicate scrolling fronds in cream silk. A rare Shui maritime motif — vitality and the abundance of the natural world. Framed and ready to hang. 12 × 12 × 3 cm.',
     category: 'frame',
     img: '/imgs/whale.png',
     stock: 1
@@ -37,7 +37,7 @@ const products = [
     name: 'Pomegranate Medallion Frame',
     nameZh: '石榴花纹马尾绣相框',
     priceGBP: 85,
-    description: 'A stacked pomegranate medallion in burnt orange and teal silk, a Shui symbol of fertility and abundance. The layered geometry reflects centuries-old cosmological motifs. Framed and ready to hang. 10cm × 10cm.',
+    description: 'A stacked pomegranate medallion in burnt orange and teal silk, a Shui symbol of fertility and abundance. The layered geometry reflects centuries-old cosmological motifs. Framed and ready to hang. 12 × 12 × 3 cm.',
     category: 'frame',
     img: '/imgs/pomegranate-2.png',
     stock: 1
@@ -47,7 +47,7 @@ const products = [
     name: 'Bird in Flight Frame',
     nameZh: '飞鸟马尾绣相框',
     priceGBP: 85,
-    description: 'A bird soars across midnight-black fabric, wings spread in teal and amber silk thread over horsetail hair. Freedom, good fortune, and the open sky — one of the most beloved Shui embroidery motifs. Framed and ready to hang. 10cm × 10cm.',
+    description: 'A bird soars across midnight-black fabric, wings spread in teal and amber silk thread over horsetail hair. Freedom, good fortune, and the open sky — one of the most beloved Shui embroidery motifs. Framed and ready to hang. 12 × 12 × 3 cm.',
     category: 'frame',
     img: '/imgs/bird-1.png',
     stock: 1
@@ -57,7 +57,7 @@ const products = [
     name: 'Twin Pomegranate Frame',
     nameZh: '双石榴马尾绣相框',
     priceGBP: 85,
-    description: 'Two pomegranate blossoms intertwine in teal and crimson silk, their stems curling outward in traditional Shui scrollwork. A classic motif of fertility and celebration. Framed and ready to hang. 10cm × 10cm.',
+    description: 'Two pomegranate blossoms intertwine in teal and crimson silk, their stems curling outward in traditional Shui scrollwork. A classic motif of fertility and celebration. Framed and ready to hang. 12 × 12 × 3 cm.',
     category: 'frame',
     img: '/imgs/pomegranate-1.png',
     stock: 1
@@ -67,7 +67,7 @@ const products = [
     name: 'Phoenix Bird Frame',
     nameZh: '凤鸟马尾绣相框',
     priceGBP: 85,
-    description: 'An elegant phoenix-bird rendered in flowing teal and gold silk thread over horsetail hair. The graceful curving form is a hallmark of Shui embroidery — each stroke of silk a single continuous thread. Framed and ready to hang. 10cm × 10cm.',
+    description: 'An elegant phoenix-bird rendered in flowing teal and gold silk thread over horsetail hair. The graceful curving form is a hallmark of Shui embroidery — each stroke of silk a single continuous thread. Framed and ready to hang. 12 × 12 × 3 cm.',
     category: 'frame',
     img: '/imgs/bird-2.png',
     stock: 1
@@ -77,7 +77,7 @@ const products = [
     name: 'Dragon Fish Frame',
     nameZh: '鱼龙马尾绣相框',
     priceGBP: 85,
-    description: 'A mythic dragon-fish leaps from the dark fabric, outlined in silver-white horsetail thread with bursts of coral and saffron silk. Scattered dot accents evoke stars and the spirit world. Framed and ready to hang. 10cm × 10cm.',
+    description: 'A mythic dragon-fish leaps from the dark fabric, outlined in silver-white horsetail thread with bursts of coral and saffron silk. Scattered dot accents evoke stars and the spirit world. Framed and ready to hang. 12 × 12 × 3 cm.',
     category: 'frame',
     img: '/imgs/fish-dragon-1.png',
     stock: 1
@@ -87,7 +87,7 @@ const products = [
     name: 'Water Dragon Frame',
     nameZh: '水龙马尾绣相框',
     priceGBP: 85,
-    description: 'A sinuous water dragon descends in teal and amber silk, its flowing limbs and ornate body a masterwork of Shui horsetail embroidery technique. One of the most intricate motifs in the tradition. Framed and ready to hang. 10cm × 10cm.',
+    description: 'A sinuous water dragon descends in teal and amber silk, its flowing limbs and ornate body a masterwork of Shui horsetail embroidery technique. One of the most intricate motifs in the tradition. Framed and ready to hang. 12 × 12 × 3 cm.',
     category: 'frame',
     img: '/imgs/fish-dragon-2.png',
     stock: 1

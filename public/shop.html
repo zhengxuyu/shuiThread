@@ -181,6 +181,12 @@
 
 <script src="/js/cart.js"></script>
 <script>
+// ── Commerce toggle ───────────────────────────────────────────
+// Set to true to re-enable prices + Add-to-Cart buttons. Original
+// implementation is kept below, gated by this flag.
+const COMMERCE_ENABLED = false;
+const CONTACT_EMAIL = 'shuithread@hotmail.com';
+
 let allProducts = [];
 let activeFilter = 'all';
 
@@ -197,16 +203,22 @@ function renderProducts(products) {
           : `<div class="product-image-placeholder placeholder-${(i%6)+1}"><svg width="60" height="60" viewBox="0 0 60 60" fill="none" opacity="0.2"><circle cx="30" cy="30" r="25" stroke="white" stroke-width="1"/></svg></div>`}
       </div>
       <div class="product-info">
-        <div class="product-category">10cm × 10cm · Framed</div>
+        <div class="product-category">12 × 12 × 3 cm · Framed</div>
         <div class="product-name">${p.name}</div>
         <div class="product-name-zh">${p.nameZh}</div>
+        ${COMMERCE_ENABLED ? `
         <div class="product-price-row">
           <span class="product-price">£${p.priceGBP}</span>
-        </div>
+        </div>` : `
+        <div class="product-price-row">
+          <span class="product-price product-collection-tag">藏 品 · Collection</span>
+        </div>`}
       </div>
       <div class="product-hover-actions">
         <a href="/product.html?id=${p.id}" class="product-hover-btn">View</a>
-        <button class="product-hover-btn" onclick='Cart.addItem(${JSON.stringify(p).replace(/'/g,"&#39;")})'>Add to Cart</button>
+        ${COMMERCE_ENABLED
+          ? `<button class="product-hover-btn" onclick='Cart.addItem(${JSON.stringify(p).replace(/'/g,"&#39;")})'>Add to Cart</button>`
+          : `<a class="product-hover-btn" href="mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent('Inquiry: ' + p.name)}">Contact Us</a>`}
       </div>
     </div>
   `).join('');

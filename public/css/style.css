@@ -510,6 +510,20 @@ body:hover .cursor-dot { opacity: 1; }
   font-size: 0.72rem;
   color: var(--ink-muted);
 }
+/* Collection-piece tag: shown when commerce is disabled.
+   Overrides .product-price (which is styled like a price). */
+.product-collection-tag {
+  font-family: var(--font-mono) !important;
+  font-size: 0.7rem !important;
+  letter-spacing: 0.32em;
+  text-transform: uppercase;
+  color: var(--orange) !important;
+}
+.product-detail-price.product-collection-tag {
+  font-size: 0.78rem !important;
+  letter-spacing: 0.4em;
+  margin-top: 0.4rem;
+}
 .product-hover-actions {
   position: absolute;
   bottom: 0; left: 0; right: 0;
