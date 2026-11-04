@@ -417,7 +417,7 @@
     <div class="footer-col">
       <h4>Contact</h4>
       <ul>
-        <li><a href="mailto:shuithread@hotmail.com">shuithread@hotmail.com</a></li>
+        <li><a href="mailto:hello@shuithread.com">hello@shuithread.com</a></li>
         <li>Sandu, Guizhou · China</li>
       </ul>
     </div>
@@ -441,7 +441,7 @@ document.getElementById('processToggle').addEventListener('click', function() {
 <script>
 // ── Commerce toggle (see collection.html for full notes) ──
 const COMMERCE_ENABLED = true;
-const CONTACT_EMAIL = 'shuithread@hotmail.com';
+const CONTACT_EMAIL = 'hello@shuithread.com';
 
 // Load featured products from API
 (async () => {
@@ -461,7 +461,7 @@ const CONTACT_EMAIL = 'shuithread@hotmail.com';
           <div class="product-name-zh">${p.nameZh}</div>
           ${COMMERCE_ENABLED ? `
           <div class="product-price-row">
-            <span class="product-price">£${p.priceGBP}</span>
+            ${p.sold ? `<span class="product-price product-collection-tag">Sold · 已售</span>` : `<span class="product-price">£${p.priceGBP}</span>`}
           </div>` : `
           <div class="product-price-row">
             <span class="product-price product-collection-tag">藏 品 · Collection</span>
@@ -470,7 +470,7 @@ const CONTACT_EMAIL = 'shuithread@hotmail.com';
         <div class="product-hover-actions">
           <a href="/product.html?id=${p.id}" class="product-hover-btn">View</a>
           ${COMMERCE_ENABLED
-            ? `<button class="product-hover-btn" onclick='Cart.addItem(${JSON.stringify(p).replace(/'/g, "&#39;")})'>Add to Cart</button>`
+            ? p.sold ? '' : `<button class="product-hover-btn" onclick='Cart.addItem(${JSON.stringify(p).replace(/'/g, "&#39;")})'>Add to Cart</button>`
             : `<a class="product-hover-btn" href="mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent('Inquiry: ' + p.name)}">Contact Us</a>`}
         </div>
       </div>

@@ -171,7 +171,7 @@
       <h4>Info</h4>
       <ul>
         <li><a href="/about.html">About</a></li>
-        <li><a href="mailto:shuithread@hotmail.com">Contact Us</a></li>
+        <li><a href="mailto:hello@shuithread.com">Contact Us</a></li>
       </ul>
     </div>
   </div>
@@ -186,7 +186,7 @@
 // Set to true to re-enable prices + Add-to-Cart buttons. Original
 // implementation is kept below, gated by this flag.
 const COMMERCE_ENABLED = true;
-const CONTACT_EMAIL = 'shuithread@hotmail.com';
+const CONTACT_EMAIL = 'hello@shuithread.com';
 
 let allProducts = [];
 let activeFilter = 'all';
@@ -209,7 +209,7 @@ function renderProducts(products) {
         <div class="product-name-zh">${p.nameZh}</div>
         ${COMMERCE_ENABLED ? `
         <div class="product-price-row">
-          <span class="product-price">£${p.priceGBP}</span>
+          ${p.sold ? `<span class="product-price product-collection-tag">Sold · 已售</span>` : `<span class="product-price">£${p.priceGBP}</span>`}
         </div>` : `
         <div class="product-price-row">
           <span class="product-price product-collection-tag">藏 品 · Collection</span>
@@ -218,7 +218,7 @@ function renderProducts(products) {
       <div class="product-hover-actions">
         <a href="/product.html?id=${p.id}" class="product-hover-btn">View</a>
         ${COMMERCE_ENABLED
-          ? `<button class="product-hover-btn" onclick='Cart.addItem(${JSON.stringify(p).replace(/'/g,"&#39;")})'>Add to Cart</button>`
+          ? p.sold ? '' : `<button class="product-hover-btn" onclick='Cart.addItem(${JSON.stringify(p).replace(/'/g,"&#39;")})'>Add to Cart</button>`
           : `<a class="product-hover-btn" href="mailto:${CONTACT_EMAIL}?subject=${encodeURIComponent('Inquiry: ' + p.name)}">Contact Us</a>`}
       </div>
     </div>
