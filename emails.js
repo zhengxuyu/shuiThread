@@ -6,6 +6,8 @@
 
 const DEFAULT_SITE = 'https://shuithread.com';
 const CONTACT = 'hello@shuithread.com';
+const SELLER = 'CARBONKITE LTD';
+const SELLER_ADDRESS = '28 Tersha Street, Richmond, TW9 2LY, United Kingdom';
 
 const C = {
   cream: '#F7F3ED', parchment: '#EDE7DC', white: '#FFFFFF',
@@ -155,9 +157,31 @@ function customerConfirmation(order, site = DEFAULT_SITE) {
     <p style="margin:12px 0 0;font-family:${SERIF};font-size:15px;line-height:1.7;color:${C.soft};">
       Your piece will be prepared in our Sandu studio and shipped within 7–21 days. We'll write again as soon as it leaves the studio.
     </p>
-    <p style="margin:12px 0 0;font-family:${SERIF};font-size:14px;line-height:1.7;color:${C.muted};">
-      Changed your mind? You have 14 days from delivery to cancel, without giving a reason. Return postage is paid by you unless the piece is faulty. <a href="${site}/returns.html" style="color:${C.teal};">Returns &amp; after-sales</a>
+  </td></tr>
+
+  <tr><td class="pad" style="padding:34px 44px 0;">
+    ${label('Your right to cancel')}
+    <p style="margin:12px 0 0;font-family:${SERIF};font-size:14px;line-height:1.7;color:${C.soft};">
+      You may cancel this contract without giving a reason within 14 days of the day you, or someone you name, receive the goods. To cancel, tell ${SELLER} (${SELLER_ADDRESS}; <a href="mailto:${CONTACT}" style="color:${C.teal};">${CONTACT}</a>) with a clear statement. You may use the form below, but it is not required. To meet the deadline, you only need to send your notice before the 14 days end.
     </p>
+    <p style="margin:10px 0 0;font-family:${SERIF};font-size:14px;line-height:1.7;color:${C.soft};">
+      If you cancel, send the goods back without undue delay and within 14 days of telling us. <b>You pay the direct cost of returning them.</b> We'll refund all payments received, using your original payment method, within 14 days of receiving the goods or proof that you sent them, whichever is sooner. We may reduce the refund for any loss in value caused by handling beyond what was needed to establish the nature, characteristics and functioning of the goods.
+    </p>
+    <p style="margin:10px 0 0;font-family:${SERIF};font-size:14px;line-height:1.7;color:${C.soft};">
+      This doesn't affect your rights if a piece is faulty or not as described; in that case we pay for the return. Full details: <a href="${site}/returns.html" style="color:${C.teal};">Returns &amp; after-sales</a>.
+    </p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:14px;background:${C.parchment};">
+      <tr><td style="padding:18px 20px;font-family:${SERIF};font-size:13px;line-height:1.7;color:${C.soft};">
+        <b>Cancellation form</b> (complete and return only if you wish to cancel)<br>
+        To: ${SELLER}, ${SELLER_ADDRESS}, ${CONTACT}<br>
+        I/We hereby give notice that I/We cancel my/our contract of sale of the following goods:<br>
+        Ordered on / received on:<br>
+        Name of consumer(s):<br>
+        Address of consumer(s):<br>
+        Signature of consumer(s) (only if this form is sent on paper):<br>
+        Date:
+      </td></tr>
+    </table>
   </td></tr>
 
   <tr><td class="pad" align="left" style="padding:30px 44px 42px;">
@@ -173,7 +197,7 @@ function customerConfirmation(order, site = DEFAULT_SITE) {
       <a href="${site}" style="color:#F7F3ED;">shuithread.com</a> &nbsp;·&nbsp; <a href="mailto:${CONTACT}" style="color:#F7F3ED;">${CONTACT}</a><br><a href="${site}/returns.html" style="color:#F7F3ED;">Returns &amp; after-sales</a>
     </div>
     <div style="padding-top:12px;font-family:${SERIF};font-size:12px;line-height:1.6;color:#8D8678;">
-      You're receiving this because you placed an order at shuithread.com. Payments for Shui Thread are processed by CARBONKITE LTD, so you may see this name on your card statement.
+      You're receiving this because you placed an order at shuithread.com. Shui Thread is operated by ${SELLER}, ${SELLER_ADDRESS}, the seller of your order and the name you may see on your card statement.
     </div>
   </td></tr>
 
@@ -200,7 +224,22 @@ function customerConfirmation(order, site = DEFAULT_SITE) {
     '',
     "Your piece will be prepared in our Sandu studio and shipped within 7-21 days. We'll write again as soon as it leaves the studio.",
     '',
-    `Changed your mind? You have 14 days from delivery to cancel: ${site}/returns.html`,
+    'YOUR RIGHT TO CANCEL',
+    `You may cancel this contract without giving a reason within 14 days of the day you, or someone you name, receive the goods. To cancel, tell ${SELLER} (${SELLER_ADDRESS}; ${CONTACT}) with a clear statement. To meet the deadline, you only need to send your notice before the 14 days end.`,
+    'If you cancel, send the goods back without undue delay and within 14 days of telling us. You pay the direct cost of returning them. We will refund all payments received, using your original payment method, within 14 days of receiving the goods or proof that you sent them, whichever is sooner. We may reduce the refund for any loss in value caused by handling beyond what was needed to establish the nature, characteristics and functioning of the goods.',
+    'This does not affect your rights if a piece is faulty or not as described; in that case we pay for the return.',
+    '',
+    'CANCELLATION FORM (complete and return only if you wish to cancel)',
+    `To: ${SELLER}, ${SELLER_ADDRESS}, ${CONTACT}`,
+    'I/We hereby give notice that I/We cancel my/our contract of sale of the following goods:',
+    'Ordered on / received on:',
+    'Name of consumer(s):',
+    'Address of consumer(s):',
+    'Signature of consumer(s) (only if this form is sent on paper):',
+    'Date:',
+    '',
+    `Full details: ${site}/returns.html`,
+    `Seller: ${SELLER}, ${SELLER_ADDRESS}`,
     `Questions? ${CONTACT}`,
     site,
   ].join('\n');

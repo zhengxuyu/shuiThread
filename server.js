@@ -234,7 +234,8 @@ app.post('/api/create-checkout-session', async (req, res) => {
       ...(discounts ? { discounts } : {}),
       shipping_address_collection: { allowed_countries: ['GB'] },
       shipping_options: [
-        { shipping_rate_data: { display_name: 'UK Standard Delivery', type: 'fixed_amount', fixed_amount: { amount: 0, currency: 'gbp' }, delivery_estimate: { minimum: { unit: 'business_day', value: 3 }, maximum: { unit: 'business_day', value: 7 } } } }
+        { shipping_rate_data: { display_name: 'UK Standard Delivery', type: 'fixed_amount', fixed_amount: { amount: 0, currency: 'gbp' }, // Ships within 7–21 days, then 3–7 business days in transit.
+          delivery_estimate: { minimum: { unit: 'business_day', value: 8 }, maximum: { unit: 'business_day', value: 22 } } } }
       ],
       phone_number_collection: { enabled: true },
       success_url: `${origin}/success.html?session_id={CHECKOUT_SESSION_ID}`,
