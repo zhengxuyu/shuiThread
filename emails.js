@@ -495,10 +495,11 @@ ${sellerFooter(site)}
 }
 
 // ─── Customer: voucher ──────────────────────────────────────
-// Written like a personal note, with no images or buttons: a one-to-one code
-// shouldn't look like a campaign.
+// The code comes before the seller's note, and the subject names the code. Gmail
+// threads mail with the same subject and hides text repeated from earlier
+// messages, which must never be the code itself.
 function customerVoucher({ code, label: offer, expiresOn, maxRedemptions, message }, site = DEFAULT_SITE) {
-  const subject = 'A code for your next Shui Thread piece';
+  const subject = `Your Shui Thread code: ${code}`;
   const expiry = expiresOn ? new Date(`${expiresOn}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }) : '';
   const terms = [
     maxRedemptions === 1 ? 'It can be used once.' : '',
@@ -506,26 +507,39 @@ function customerVoucher({ code, label: offer, expiresOn, maxRedemptions, messag
   ].filter(Boolean).join(' ');
   const stop = 'To stop receiving offers from us, reply to this email and tell us.';
   const seller = `Shui Thread is operated by ${SELLER}, ${SELLER_ADDRESS}.`;
-  const p = 'margin:0 0 16px;';
+  const para = `margin:0 0 16px;font-family:${SERIF};font-size:16px;line-height:1.7;color:${C.soft};`;
   const html = `<!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(subject)}</title></head>
-<body style="margin:0;padding:24px 16px;background:#FFFFFF;">
-<div style="max-width:560px;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:1.6;color:#222222;">
-  <p style="${p}">Hello,</p>
-  ${message ? `<p style="${p}">${esc(message).replace(/\n/g, '<br>')}</p>` : ''}
-  <p style="${p}">Here's a code for ${esc(offer)} your next piece from Shui Thread:</p>
-  <p style="${p}font-size:18px;"><b>${esc(code)}</b></p>
-  <p style="${p}">Enter it in your cart at <a href="${site}/collection.html">shuithread.com</a>.${terms ? ` ${esc(terms)}` : ''}</p>
-  <p style="${p}">Best wishes,<br>Shui Thread</p>
-  <p style="margin:24px 0 0;font-size:12px;line-height:1.5;color:#777777;">${esc(stop)} ${esc(seller)}</p>
-</div>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light only"><title>${esc(subject)}</title>
+<style>@media (max-width: 620px) { .pad { padding-left: 24px !important; padding-right: 24px !important; } }</style></head>
+<body style="margin:0;padding:0;background:${C.parchment};">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${C.parchment};">
+<tr><td align="center" style="padding:24px 12px;">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background:${C.cream};">
+  <tr><td class="pad" style="padding:30px 44px 26px;">
+    <a href="${site}" style="text-decoration:none;"><img src="${site}/imgs/email/logo.png" width="172" alt="Shui Thread · 水丝线马尾绣" style="display:block;width:172px;height:auto;border:0;"></a>
+  </td></tr>
+  <tr><td><img src="${site}/imgs/email/hero.jpg" width="600" alt="Shui horsetail hair embroidery, close up" style="display:block;width:100%;max-width:600px;height:auto;border:0;"></td></tr>
+  <tr><td class="pad" style="padding:34px 44px 0;">
+    <p style="${para}">Hello,</p>
+    <p style="${para}">Here's a code for ${esc(offer)} your next piece from Shui Thread:</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${C.parchment};">
+      <tr><td align="center" style="padding:20px;font-family:${MONO};font-size:24px;letter-spacing:2px;color:${C.ink};">${esc(code)}</td></tr>
+    </table>
+    <p style="${para}margin-top:16px;">Enter it in your cart at <a href="${site}/collection.html" style="color:${C.teal};">shuithread.com</a>.${terms ? ` ${esc(terms)}` : ''}</p>
+    ${message ? `<p style="${para}">${esc(message).replace(/\n/g, '<br>')}</p>` : ''}
+    <p style="${para}">Best wishes,<br>Shui Thread</p>
+  </td></tr>
+  <tr><td class="pad" style="padding:8px 44px 30px;font-family:${SERIF};font-size:12px;line-height:1.6;color:${C.muted};">${esc(stop)} ${esc(seller)}</td></tr>
+</table>
+</td></tr>
+</table>
 </body></html>`;
   const text = [
     'Hello,', '',
-    ...(message ? [message, ''] : []),
     `Here's a code for ${offer} your next piece from Shui Thread:`, '',
     code, '',
     `Enter it in your cart at ${site}/collection.html.${terms ? ` ${terms}` : ''}`, '',
+    ...(message ? [message, ''] : []),
     'Best wishes,', 'Shui Thread', '',
     stop, seller,
   ].join('\n');
