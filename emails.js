@@ -179,28 +179,10 @@ function customerConfirmation(order, site = DEFAULT_SITE) {
   </td></tr>
 
   <tr><td class="pad" style="padding:34px 44px 0;">
-    ${label('Your right to cancel')}
+    ${label('Changed your mind?')}
     <p style="margin:12px 0 0;font-family:${SERIF};font-size:14px;line-height:1.7;color:${C.soft};">
-      You may cancel this contract without giving a reason within 14 days of the day you, or someone you name, receive the goods. To cancel, tell ${SELLER} (${SELLER_ADDRESS}; <a href="mailto:${CONTACT}" style="color:${C.teal};">${CONTACT}</a>) with a clear statement. You may use the form below, but it is not required. To meet the deadline, you only need to send your notice before the 14 days end.
+      You can cancel within 14 days of receiving your piece, and you pay the return postage. ${order.orderUrl ? 'You can request a refund from your order page. ' : ''}Your cancellation rights and form are in the attached PDF.
     </p>
-    <p style="margin:10px 0 0;font-family:${SERIF};font-size:14px;line-height:1.7;color:${C.soft};">
-      If you cancel, send the goods back without undue delay and within 14 days of telling us. <b>You pay the direct cost of returning them.</b> We'll refund all payments received, using your original payment method, within 14 days of receiving the goods or proof that you sent them, whichever is sooner. We may reduce the refund for any loss in value caused by handling beyond what was needed to establish the nature, characteristics and functioning of the goods.
-    </p>
-    <p style="margin:10px 0 0;font-family:${SERIF};font-size:14px;line-height:1.7;color:${C.soft};">
-      This doesn't affect your rights if a piece is faulty or not as described; in that case we pay for the return. Full details: <a href="${site}/returns.html" style="color:${C.teal};">Returns &amp; after-sales</a>.
-    </p>
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="margin-top:14px;background:${C.parchment};">
-      <tr><td style="padding:18px 20px;font-family:${SERIF};font-size:13px;line-height:1.7;color:${C.soft};">
-        <b>Cancellation form</b> (complete and return only if you wish to cancel)<br>
-        To: ${SELLER}, ${SELLER_ADDRESS}, ${CONTACT}<br>
-        I/We hereby give notice that I/We cancel my/our contract of sale of the following goods:<br>
-        Ordered on / received on:<br>
-        Name of consumer(s):<br>
-        Address of consumer(s):<br>
-        Signature of consumer(s) (only if this form is sent on paper):<br>
-        Date:
-      </td></tr>
-    </table>
   </td></tr>
 
   <tr><td class="pad" align="left" style="padding:30px 44px 42px;">
@@ -232,21 +214,9 @@ ${sellerFooter(site)}
     '',
     "Your piece will be prepared in our Sandu studio and shipped within 7-21 days. We'll write again as soon as it leaves the studio.",
     '',
-    'YOUR RIGHT TO CANCEL',
-    `You may cancel this contract without giving a reason within 14 days of the day you, or someone you name, receive the goods. To cancel, tell ${SELLER} (${SELLER_ADDRESS}; ${CONTACT}) with a clear statement. To meet the deadline, you only need to send your notice before the 14 days end.`,
-    'If you cancel, send the goods back without undue delay and within 14 days of telling us. You pay the direct cost of returning them. We will refund all payments received, using your original payment method, within 14 days of receiving the goods or proof that you sent them, whichever is sooner. We may reduce the refund for any loss in value caused by handling beyond what was needed to establish the nature, characteristics and functioning of the goods.',
-    'This does not affect your rights if a piece is faulty or not as described; in that case we pay for the return.',
+    'Changed your mind? You can cancel within 14 days of receiving your piece, and you pay the return postage. Your cancellation rights and form are in the attached PDF.',
     '',
-    'CANCELLATION FORM (complete and return only if you wish to cancel)',
-    `To: ${SELLER}, ${SELLER_ADDRESS}, ${CONTACT}`,
-    'I/We hereby give notice that I/We cancel my/our contract of sale of the following goods:',
-    'Ordered on / received on:',
-    'Name of consumer(s):',
-    'Address of consumer(s):',
-    'Signature of consumer(s) (only if this form is sent on paper):',
-    'Date:',
-    '',
-    `Full details: ${site}/returns.html`,
+    `Returns & after-sales: ${site}/returns.html`,
     `Seller: ${SELLER}, ${SELLER_ADDRESS}`,
     `Questions? ${CONTACT}`,
     site,
@@ -383,4 +353,143 @@ function ownerNotification(order, site = DEFAULT_SITE) {
   return { subject, html, text };
 }
 
-module.exports = { customerConfirmation, customerShipped, ownerNotification, gbp };
+// ─── Refund requests ────────────────────────────────────────
+function refundDate(iso) {
+  return new Date(iso).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'Europe/London' });
+}
+
+// What the buyer should do next depends on the reason and on whether it shipped.
+function refundNextSteps(request, shipped) {
+  if (request.reason === 'faulty') {
+    return [
+      "We're sorry. Please reply to this email with a photo of the problem.",
+      "We'll tell you what happens next. If the piece needs to come back, we pay the return postage.",
+    ];
+  }
+  if (!shipped) {
+    return [
+      "Your piece hasn't shipped yet, so there is nothing to send back.",
+      "We'll confirm by email and refund what you paid to your original payment method within 14 days of your request.",
+    ];
+  }
+  return [
+    "We'll reply with the return address. Please send your piece back within 14 days of your request, well packed and with its certificate of authenticity, using a tracked and insured service. You pay the return postage.",
+    "We'll refund what you paid to your original payment method within 14 days of receiving the piece, or proof you sent it, whichever is sooner. We may reduce the refund for any loss in value caused by handling beyond what was needed to establish the nature, characteristics and functioning of the piece.",
+  ];
+}
+
+function customerRefundRequested(order, request, shipped, site = DEFAULT_SITE) {
+  const subject = `We've received your refund request · ${order.ref}`;
+  const when = refundDate(request.requestedAt);
+  const steps = refundNextSteps(request, shipped);
+  const html = `<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light only"><title>${esc(subject)}</title></head>
+<body style="margin:0;padding:0;background:${C.parchment};">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${C.parchment};">
+<tr><td align="center" style="padding:24px 12px;">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background:${C.cream};">
+  <tr><td class="pad" style="padding:30px 44px 8px;">
+    <a href="${site}" style="text-decoration:none;"><img src="${site}/imgs/email/logo.png" width="172" alt="Shui Thread · 水丝线马尾绣" style="display:block;width:172px;height:auto;border:0;"></a>
+  </td></tr>
+  <tr><td class="pad" style="padding:26px 44px 0;">
+    <div style="font-family:${MONO};font-size:11px;letter-spacing:2.6px;text-transform:uppercase;color:${C.orange};padding-bottom:14px;">Refund request · 退款申请</div>
+    <h1 style="margin:0;font-family:${SERIF};font-weight:normal;font-size:34px;line-height:1.1;color:${C.ink};">Request received.</h1>
+    <p style="margin:16px 0 0;font-family:${SERIF};font-size:15px;line-height:1.7;color:${C.soft};">We received your request on ${esc(when)} for order ${esc(order.ref)}: ${order.items.map(i => esc(i.name)).join(', ')}.</p>
+    ${steps.map(p => `<p style="margin:12px 0 0;font-family:${SERIF};font-size:15px;line-height:1.7;color:${C.soft};">${esc(p)}</p>`).join('')}
+  </td></tr>
+  <tr><td class="pad" style="padding:26px 44px 34px;font-family:${SERIF};font-size:14px;line-height:1.7;color:${C.muted};">
+    ${order.orderUrl ? `<a href="${esc(order.orderUrl)}" style="color:${C.teal};">View your order</a> &nbsp;·&nbsp; ` : ''}<a href="${site}/returns.html" style="color:${C.teal};">Returns &amp; after-sales</a>
+  </td></tr>
+${sellerFooter(site)}
+</table>
+</td></tr>
+</table>
+</body></html>`;
+  const text = [
+    `We received your refund request on ${when} for order ${order.ref}: ${order.items.map(i => i.name).join(', ')}.`, '',
+    ...steps.flatMap(p => [p, '']),
+    ...(order.orderUrl ? [`View your order: ${order.orderUrl}`] : []),
+    `Returns & after-sales: ${site}/returns.html`, `Questions? ${CONTACT}`,
+  ].join('\n');
+  return { subject, html, text };
+}
+
+function ownerRefundRequest(order, request, shipment, site = DEFAULT_SITE) {
+  const reason = request.reason === 'faulty' ? '有瑕疵、损坏或与描述不符' : '无理由退货';
+  const status = shipment ? `已发货（${shipment.carrierName} ${shipment.tracking}）` : '尚未发货，请不要再寄出';
+  const action = request.reason === 'faulty'
+    ? '请回复买家，并根据照片决定如何处理。需要退回时运费由我们承担。'
+    : shipment ? '请回复买家告知退货地址。收到作品或寄件凭证后，14 天内在 Stripe 退款。' : '请回复买家确认取消，并在申请日起 14 天内在 Stripe 退款。';
+  const when = new Date(request.requestedAt).toLocaleString('zh-CN', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Europe/London' });
+  const subject = `退款申请 · ${order.ref} · ${order.items.map(i => i.name).join(', ')}`;
+  const row = (k, v) => `<tr><td valign="top" style="padding:6px 16px 6px 0;font-size:13px;color:${C.muted};white-space:nowrap;">${k}</td><td style="padding:6px 0;font-size:15px;line-height:1.5;color:${C.ink};">${v}</td></tr>`;
+  const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+<body style="margin:0;padding:24px 12px;background:${C.parchment};font-family:${SERIF};">
+<table role="presentation" width="600" align="center" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background:${C.cream};">
+  <tr><td style="padding:28px 32px 0;">
+    <div style="font-family:${MONO};font-size:11px;letter-spacing:2.2px;color:${C.orange};">REFUND REQUEST · 退款申请</div>
+    <div style="padding-top:8px;font-size:26px;color:${C.ink};">${esc(order.items.map(i => i.name).join('，'))}</div>
+    <p style="margin:12px 0 0;font-size:15px;line-height:1.7;color:${C.soft};">${esc(action)}</p>
+  </td></tr>
+  <tr><td style="padding:18px 32px 30px;">
+    <table role="presentation" cellpadding="0" cellspacing="0" border="0">
+      ${row('订单', esc(order.ref))}
+      ${row('申请时间', `${esc(when)}（英国时间）`)}
+      ${row('原因', esc(reason))}
+      ${request.note ? row('买家留言', esc(request.note).replace(/\n/g, '<br>')) : ''}
+      ${row('发货状态', esc(status))}
+      ${row('实付', gbp(order.totalPence))}
+      ${row('买家', `${esc(order.customerName)}<br><a href="mailto:${esc(order.email)}" style="color:${C.teal};">${esc(order.email)}</a>`)}
+      ${order.stripeUrl ? row('Stripe', `<a href="${esc(order.stripeUrl)}" style="color:${C.teal};">查看付款并退款</a>`) : ''}
+    </table>
+    <p style="margin:14px 0 0;font-size:13px;line-height:1.6;color:${C.muted};">直接回复这封邮件即可联系买家。系统不会自动退款。</p>
+  </td></tr>
+</table>
+</body></html>`;
+  const text = [
+    `退款申请 ${order.ref}`, action, '',
+    `作品：${order.items.map(i => i.name).join('，')}`, `申请时间：${when}（英国时间）`, `原因：${reason}`,
+    ...(request.note ? [`买家留言：${request.note}`] : []),
+    `发货状态：${status}`, `实付：${gbp(order.totalPence)}`, `买家：${order.customerName} ${order.email}`,
+    ...(order.stripeUrl ? [`Stripe：${order.stripeUrl}`] : []), '', '系统不会自动退款。',
+  ].join('\n');
+  return { subject, html, text };
+}
+
+// ─── Customer: "find my order" links ────────────────────────
+function customerOrderLinks(orders, site = DEFAULT_SITE) {
+  const subject = orders.length > 1 ? 'Your Shui Thread order links' : `Your Shui Thread order link · ${orders[0].ref}`;
+  const html = `<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light only"><title>${esc(subject)}</title></head>
+<body style="margin:0;padding:0;background:${C.parchment};">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${C.parchment};">
+<tr><td align="center" style="padding:24px 12px;">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background:${C.cream};">
+  <tr><td class="pad" style="padding:30px 44px 8px;">
+    <a href="${site}" style="text-decoration:none;"><img src="${site}/imgs/email/logo.png" width="172" alt="Shui Thread · 水丝线马尾绣" style="display:block;width:172px;height:auto;border:0;"></a>
+  </td></tr>
+  <tr><td class="pad" style="padding:26px 44px 0;">
+    <h1 style="margin:0;font-family:${SERIF};font-weight:normal;font-size:34px;line-height:1.1;color:${C.ink};">Your order${orders.length > 1 ? 's' : ''}.</h1>
+    <p style="margin:14px 0 0;font-family:${SERIF};font-size:15px;line-height:1.7;color:${C.soft};">Here ${orders.length > 1 ? 'are the links' : 'is the link'} you asked for. Please keep this email private: anyone with a link can see that order and request a refund.</p>
+  </td></tr>
+  ${orders.map(o => `<tr><td class="pad" style="padding:24px 44px 0;">
+    <div style="padding-bottom:10px;border-bottom:1px solid ${C.line};font-family:${MONO};font-size:12px;letter-spacing:1px;color:${C.muted};">${esc(o.ref)}</div>
+    <div style="padding:12px 0 14px;font-family:${SERIF};font-size:16px;line-height:1.5;color:${C.ink};">${o.items.map(i => esc(i.name)).join(', ')}</div>
+    ${button(o.orderUrl, 'View your order →')}
+  </td></tr>`).join('')}
+  <tr><td class="pad" style="padding:26px 44px 34px;font-family:${SERIF};font-size:13px;line-height:1.7;color:${C.muted};">If you didn't ask for this, you can ignore this email.</td></tr>
+${sellerFooter(site)}
+</table>
+</td></tr>
+</table>
+</body></html>`;
+  const text = [
+    'Here are your Shui Thread order links. Please keep this email private: anyone with a link can see that order and request a refund.', '',
+    ...orders.flatMap(o => [`${o.ref}: ${o.items.map(i => i.name).join(', ')}`, o.orderUrl, '']),
+    "If you didn't ask for this, you can ignore this email.", `Questions? ${CONTACT}`,
+  ].join('\n');
+  return { subject, html, text };
+}
+
+module.exports = { customerConfirmation, customerShipped, ownerNotification, customerRefundRequested, ownerRefundRequest, customerOrderLinks, gbp };
