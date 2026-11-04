@@ -5,9 +5,9 @@ const path = require('path');
 const { resolveVoucher, VoucherError } = require('./voucher');
 const {
   sessionMetadata, getSoldIds, handleCheckoutCompleted, verifyResendSignature, forwardInbound,
-  listOrders, shipOrder, setRelisted, publicOrderView, OrderError,
+  listOrders, shipOrder, setRelisted, publicOrderView, requestRefund, emailOrderLinks, OrderError,
 } = require('./orders');
-const { adminLogin, adminLogout, requireAdmin } = require('./admin');
+const { adminLogin, adminLogout, requireAdmin, clientKey } = require('./admin');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -324,6 +324,37 @@ app.post('/api/admin/orders/:id/relist', requireAdmin, async (req, res) => {
   } catch (err) { orderErrorResponse(res, err, 'Relist'); }
 });
 
+// "Find your order": same answer and similar timing whether or not the address has orders.
+const LOOKUP_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const LOOKUP_MIN_MS = 1500;
+const LOOKUP_MAX = 5;
+const LOOKUP_WINDOW_MS = 15 * 60 * 1000;
+const lookups = new Map(); // Best effort: per serverless instance.
+
+function lookupAllowed(key, now = Date.now()) {
+  const rec = lookups.get(key);
+  if (!rec || now - rec.first > LOOKUP_WINDOW_MS) { lookups.set(key, { first: now, count: 1 }); return true; }
+  rec.count += 1;
+  return rec.count <= LOOKUP_MAX;
+}
+
+app.post('/api/orders/lookup', async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  const email = req.body?.email;
+  if (typeof email !== 'string' || email.length > 254 || !LOOKUP_EMAIL.test(email.trim())) {
+    return res.status(400).json({ error: 'Please enter a valid email address' });
+  }
+  if (!lookupAllowed(clientKey(req))) return res.status(429).json({ error: 'Too many attempts. Please try again in 15 minutes.' });
+  const started = Date.now();
+  try {
+    if (stripeConfigured()) await emailOrderLinks(stripeClient(), email, products);
+  } catch (err) {
+    console.error('Order lookup error:', err.message); // Same answer: a failure here must not reveal a match.
+  }
+  await new Promise(done => setTimeout(done, Math.max(0, LOOKUP_MIN_MS - (Date.now() - started))));
+  res.json({ ok: true });
+});
+
 // Buyer's order page, reached through the signed link in their email.
 app.get('/api/orders/:id', async (req, res) => {
   res.set({ 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer' });
@@ -331,6 +362,14 @@ app.get('/api/orders/:id', async (req, res) => {
   try {
     res.json(await publicOrderView(stripeClient(), req.params.id, req.query.t, products));
   } catch (err) { orderErrorResponse(res, err, 'Order view'); }
+});
+
+app.post('/api/orders/:id/refund-request', async (req, res) => {
+  res.set({ 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer' });
+  if (!stripeConfigured()) return res.status(404).json({ error: 'Order not found' });
+  try {
+    res.json(await requestRefund(stripeClient(), req.params.id, req.body, products));
+  } catch (err) { orderErrorResponse(res, err, 'Refund request'); }
 });
 
 // SPA fallback - serve index for any unmatched routes

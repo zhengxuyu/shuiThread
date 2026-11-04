@@ -71,4 +71,4 @@ function adminLogout(req, res) {
   res.json({ ok: true });
 }
 
-module.exports = { adminLogin, adminLogout, requireAdmin, isAdmin };
+module.exports = { adminLogin, adminLogout, requireAdmin, isAdmin, clientKey };

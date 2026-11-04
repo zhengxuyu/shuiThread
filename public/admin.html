@@ -39,6 +39,8 @@
     .row a { color: var(--teal); }
     .link { padding: 0; border: 0; background: none; color: var(--teal); text-decoration: underline; font-size: 13px; }
     .warn { color: var(--orange); font-size: 13px; margin-top: 6px; }
+    .refund { margin-top: 12px; padding: 10px 12px; background: #FBE8DF; border-radius: 3px; font-size: 14px; }
+    .refund b { color: var(--orange); }
     .empty { color: var(--muted); padding: 40px 0; text-align: center; }
     @media (max-width: 600px) { .grid, .ship { grid-template-columns: 1fr; } }
   </style>
@@ -86,6 +88,14 @@ function shipForm(o) {
     <div class="err" style="grid-column:1/-1"></div>
   </form>`;
 }
+function refundBox(o) {
+  const r = o.refund;
+  if (!r) return '';
+  const when = new Date(r.requestedAt).toLocaleString('zh-CN', { dateStyle: 'medium', timeStyle: 'short' });
+  return `<div class="refund"><b>买家申请退款</b> · ${e(when)} · ${r.reason === 'faulty' ? '有瑕疵、损坏或与描述不符' : '无理由退货'}
+    ${r.note ? `<div style="white-space:pre-wrap;margin-top:6px">${e(r.note)}</div>` : ''}
+    <div style="margin-top:6px;font-size:13px">退款需要在 Stripe 手动操作${o.shipment ? '' : '；尚未发货，请不要再寄出'}。${r.emailSent ? '' : '<br>通知邮件没有发出，请直接联系买家。'}</div></div>`;
+}
 function card(o) {
   const a = o.address || {};
   const addr = [o.customerName, a.line1, a.line2, a.city, a.state, a.postal_code, a.country].filter(Boolean);
@@ -95,6 +105,7 @@ function card(o) {
   return `<div class="card">
     <div class="top"><div><span class="ref">${e(o.ref)}</span> · ${e(when)}</div>
       <div><span class="badge ${done ? 'done' : 'todo'}">${done ? '已发货' : s ? '已记录，邮件未发出' : '待发货'}</span>${o.relisted ? ' <span class="badge">已重新上架</span>' : ''}</div></div>
+    ${refundBox(o)}
     <div class="items">${o.items.map(i => e(i.name) + (i.qty > 1 ? ' ×' + e(i.qty) : '')).join('，')}</div>
     <div class="grid">
       <div><div class="k">寄送地址（点击可选中复制）</div><div style="user-select:all">${addr.map(e).join('<br>')}</div></div>
@@ -113,11 +124,12 @@ function card(o) {
   </div>`;
 }
 function render() {
-  const list = orders.filter(o => tab === 'all' || (tab === 'todo' ? !isDone(o) : isDone(o)));
+  const list = orders.filter(o => tab === 'all' || (tab === 'refund' ? o.refund : tab === 'todo' ? !isDone(o) : isDone(o)));
   const n = orders.filter(o => !isDone(o)).length;
   app.innerHTML = `<div class="tabs">
     <button data-tab="todo" class="${tab === 'todo' ? 'on' : ''}">待发货 (${n})</button>
     <button data-tab="done" class="${tab === 'done' ? 'on' : ''}">已发货 (${orders.length - n})</button>
+    <button data-tab="refund" class="${tab === 'refund' ? 'on' : ''}">退款申请 (${orders.filter(o => o.refund).length})</button>
     <button data-tab="all" class="${tab === 'all' ? 'on' : ''}">全部 (${orders.length})</button></div>
     ${list.map(card).join('') || '<div class="empty">没有订单</div>'}`;
 }

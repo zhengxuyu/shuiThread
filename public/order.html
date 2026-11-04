@@ -32,6 +32,17 @@
     .order-addr { margin-top: 0.6rem; line-height: 1.6; font-size: 0.95rem; }
     .order-help { margin-top: 2rem; font-size: 0.88rem; line-height: 1.7; color: var(--ink-muted); }
     .order-help a { color: var(--teal); text-decoration: underline; }
+    .order-refund { margin-top: 2rem; padding-top: 1.6rem; border-top: 1px solid var(--border); }
+    .order-refund h2 { font-family: var(--font-display); font-weight: 400; font-size: 1.4rem; }
+    .order-refund p { margin-top: 0.7rem; font-size: 0.9rem; line-height: 1.7; color: var(--ink-soft); }
+    .order-refund a { color: var(--teal); text-decoration: underline; }
+    .order-refund button { margin-top: 1rem; padding: 0.8rem 1.3rem; border: 1px solid var(--ink); border-radius: 2px; background: transparent; color: var(--ink); font-family: var(--font-mono); font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; }
+    .order-refund button[type=submit] { background: var(--ink); color: #fff; margin-right: 0.5rem; }
+    .order-refund button:disabled { opacity: 0.5; cursor: default; }
+    .order-refund label { display: flex; gap: 0.6rem; align-items: flex-start; margin-top: 0.8rem; font-size: 0.92rem; line-height: 1.5; }
+    .order-refund input[type=radio] { margin-top: 0.25rem; accent-color: var(--ink); }
+    .order-refund textarea { display: block; width: 100%; margin-top: 1rem; padding: 0.7rem; border: 1px solid var(--border); border-radius: 2px; background: #fff; font: inherit; font-size: 16px; resize: vertical; }
+    .order-refund-err { color: var(--orange); }
     .order-msg { font-size: 1rem; line-height: 1.7; color: var(--ink-soft); margin-top: 1rem; }
   </style>
 </head>
@@ -101,6 +112,7 @@
       <ul>
         <li><a href="/about.html">About</a></li>
         <li><a href="mailto:hello@shuithread.com">Contact Us</a></li>
+        <li><a href="/find-order.html">Find Your Order</a></li>
         <li><a href="/returns.html">Returns &amp; After-Sales</a></li>
       </ul>
     </div>
@@ -117,7 +129,44 @@
   const e = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const gbp = p => '£' + (p % 100 === 0 ? p / 100 : (p / 100).toFixed(2));
   const thumb = i => i ? '/imgs/email/' + i.split('/').pop().replace(/\.[a-z]+$/i, '') + '.jpg' : '';
-  const fail = () => { root.innerHTML = '<div class="order-eyebrow">Your order · 我的订单</div><h1>We can\'t find this order.</h1><p class="order-msg">Please use the link in your confirmation email, or contact <a href="mailto:hello@shuithread.com" style="color:var(--teal);text-decoration:underline">hello@shuithread.com</a>.</p>'; };
+  const fail = () => { root.innerHTML = '<div class="order-eyebrow">Your order · 我的订单</div><h1>We can\'t find this order.</h1><p class="order-msg">Please use the link in your confirmation email, <a href="/find-order.html" style="color:var(--teal);text-decoration:underline">ask for it again</a>, or contact <a href="mailto:hello@shuithread.com" style="color:var(--teal);text-decoration:underline">hello@shuithread.com</a>.</p>'; };
+  const orderApi = '/api/orders/' + encodeURIComponent(q.get('id') || '');
+  function renderRefund(o) {
+    const box = document.getElementById('refund');
+    const req = o.refundRequest;
+    if (req) {
+      const d = new Date(req.requestedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+      box.innerHTML = `<h2>Refund request received</h2><p>We received your request on ${e(d)} and emailed you the next steps. If you can't find that email, please check your spam folder or write to <a href="mailto:hello@shuithread.com">hello@shuithread.com</a>.</p>`;
+      return;
+    }
+    box.innerHTML = '<button type="button" id="refund-open">Request a refund</button>';
+    box.querySelector('#refund-open').onclick = () => {
+      box.innerHTML = `<h2>Request a refund</h2>
+        <p>You can cancel without giving a reason within 14 days of receiving your piece. You then have 14 days to send it back, and you pay the return postage. If it is faulty or not as described, we pay. <a href="/returns.html">Full details</a></p>
+        <form id="refund-form">
+          <label><input type="radio" name="reason" value="change_of_mind" checked> I've changed my mind</label>
+          <label><input type="radio" name="reason" value="faulty"> It's faulty, damaged or not as described</label>
+          <textarea name="note" rows="3" maxlength="500" aria-label="Anything you'd like to add (optional)" placeholder="Anything you'd like to add (optional)"></textarea>
+          <button type="submit">Send request</button><button type="button" id="refund-back">Back</button>
+          <p class="order-refund-err" role="alert"></p>
+        </form>`;
+      box.querySelector('#refund-back').onclick = () => renderRefund(o);
+      const f = box.querySelector('#refund-form');
+      f.onsubmit = async ev => {
+        ev.preventDefault();
+        const b = f.querySelector('[type=submit]'), err = f.querySelector('.order-refund-err');
+        b.disabled = true; err.textContent = '';
+        try {
+          const r = await fetch(orderApi + '/refund-request', { method: 'POST', referrerPolicy: 'no-referrer', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ t: q.get('t'), reason: f.reason.value, note: f.note.value }) });
+          if (!r.ok) throw new Error();
+          renderRefund(await r.json());
+        } catch {
+          err.innerHTML = 'Sorry, that didn\'t go through. Please try again, or email <a href="mailto:hello@shuithread.com">hello@shuithread.com</a>.';
+          b.disabled = false;
+        }
+      };
+    };
+  }
   try {
     const r = await fetch('/api/orders/' + encodeURIComponent(q.get('id') || '') + '?t=' + encodeURIComponent(q.get('t') || ''), { referrerPolicy: 'no-referrer' });
     if (!r.ok) return fail();
@@ -155,7 +204,9 @@
         <div class="order-line total"><span>Total paid</span><span>${gbp(o.totalPence)}</span></div>
       </div>
       <div class="order-box"><div class="order-label">Shipping to</div><div class="order-addr">${e(o.customerName)}<br>${addr.map(e).join('<br>')}</div></div>
-      <p class="order-help">Need to change something or have a question? Email <a href="mailto:hello@shuithread.com">hello@shuithread.com</a> with your order number. <a href="/returns.html">Returns &amp; after-sales</a></p>`;
+      <p class="order-help">Need to change something or have a question? Email <a href="mailto:hello@shuithread.com">hello@shuithread.com</a> with your order number. <a href="/returns.html">Returns &amp; after-sales</a></p>
+      <section class="order-refund" id="refund"></section>`;
+    renderRefund(o);
   } catch { fail(); }
 })();
 </script>

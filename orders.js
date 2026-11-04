@@ -5,7 +5,7 @@
 //  that tag is ignored.
 // ═══════════════════════════════════════════
 const crypto = require('crypto');
-const { customerConfirmation, customerShipped, ownerNotification } = require('./emails');
+const { customerConfirmation, customerShipped, ownerNotification, customerRefundRequested, ownerRefundRequest, customerOrderLinks } = require('./emails');
 
 const SITE_TAG = 'shuithread';
 const SITE_URL = 'https://shuithread.com';
@@ -23,6 +23,10 @@ const DEFAULT_NOTIFY = 'xinru.niu@carbonkites.com';
 // Tagged sessions can't exist before this feature shipped; bounds the listing.
 const SOLD_SINCE = Math.floor(Date.UTC(2026, 10, 1) / 1000);
 const SOLD_CACHE_MS = 60 * 1000;
+// Legally required cancellation notice. A link alone isn't a durable medium, so it travels as a PDF.
+const CANCELLATION_PDF = { filename: 'Shui-Thread-cancellation-notice.pdf', path: `${SITE_URL}/legal/cancellation-notice.pdf` };
+const REFUND_REASONS = ['change_of_mind', 'faulty'];
+const REFUND_NOTE_MAX = 500; // Stripe's limit for one metadata value
 
 const notifyAddress = () => process.env.ORDER_NOTIFY_EMAIL || DEFAULT_NOTIFY;
 
@@ -100,6 +104,14 @@ function shipmentFrom(meta = {}) {
   };
 }
 
+function refundFrom(meta = {}) {
+  if (!meta.refund_requested_at) return null;
+  return {
+    requestedAt: meta.refund_requested_at, reason: meta.refund_reason, note: meta.refund_note || '',
+    emailSent: meta.refund_email_sent === '1',
+  };
+}
+
 // ─── Build an order from a paid session ─────────────────────
 function buildOrder(session, products) {
   const details = session.customer_details || {};
@@ -157,7 +169,7 @@ async function sendOrderEmails(order, sessionId) {
     const c = customerConfirmation(order);
     tasks.push(sendEmail({
       from: FROM_ORDERS, to: [order.email], reply_to: REPLY_TO,
-      subject: c.subject, html: c.html, text: c.text,
+      subject: c.subject, html: c.html, text: c.text, attachments: [CANCELLATION_PDF],
     }, `order-customer/${sessionId}`));
   }
   const o = ownerNotification(order);
@@ -198,7 +210,7 @@ function adminOrderView(session, products) {
     id: session.id, ref: o.ref, createdAt: session.created, customerName: o.customerName, email: o.email, phone: o.phone,
     address: o.address, items: o.items, subtotalPence: o.subtotalPence, discountPence: o.discountPence, totalPence: o.totalPence,
     voucher: o.voucher, stripeUrl: o.stripeUrl, orderUrl: o.orderUrl, relisted: session.metadata?.relisted === '1',
-    shipment: shipmentFrom(session.metadata),
+    shipment: shipmentFrom(session.metadata), refund: refundFrom(session.metadata),
   };
 }
 
@@ -263,18 +275,87 @@ async function setRelisted(stripe, id, relisted, products) {
 }
 
 // What the buyer sees through their signed link. No email or phone.
-async function publicOrderView(stripe, id, token, products) {
-  if (!verifyOrderToken(id, token)) throw new OrderError(404, 'Order not found');
-  const session = await getShopSession(stripe, id);
+function buyerOrderView(session, products) {
   const o = buildOrder(session, products);
   const ship = shipmentFrom(session.metadata);
+  const refund = refundFrom(session.metadata);
   return {
     ref: o.ref, createdAt: session.created, status: ship ? 'shipped' : 'confirmed',
     customerName: o.customerName, address: o.address,
     items: o.items.map(i => ({ name: i.name, nameZh: i.nameZh, img: i.img, qty: i.qty, amountPence: i.amountPence })),
     subtotalPence: o.subtotalPence, discountPence: o.discountPence, shippingPence: o.shippingPence, totalPence: o.totalPence, voucher: o.voucher,
     shipment: ship && { carrierName: ship.carrierName, tracking: ship.tracking, trackingUrl: ship.trackingUrl, shippedAt: ship.shippedAt },
+    refundRequest: refund && { requestedAt: refund.requestedAt, reason: refund.reason },
   };
+}
+
+async function publicOrderView(stripe, id, token, products) {
+  if (!verifyOrderToken(id, token)) throw new OrderError(404, 'Order not found');
+  return buyerOrderView(await getShopSession(stripe, id), products);
+}
+
+// Records the request and tells both sides. It never moves money: the seller
+// refunds in Stripe. Repeat submits are safe, and the first answer is the one kept.
+async function requestRefund(stripe, id, { t, reason, note } = {}, products) {
+  if (!verifyOrderToken(id, t)) throw new OrderError(404, 'Order not found');
+  if (!REFUND_REASONS.includes(reason)) throw new OrderError(400, 'Please choose a reason');
+
+  const session = await getShopSession(stripe, id);
+  const meta = { ...session.metadata };
+  if (meta.refund_email_sent === '1') return buyerOrderView(session, products);
+
+  if (!meta.refund_requested_at) {
+    // Record first: the time of the request must never be lost to a mail failure.
+    const fields = {
+      refund_requested_at: new Date().toISOString(), refund_reason: reason,
+      refund_note: String(note || '').trim().slice(0, REFUND_NOTE_MAX), refund_email_sent: '0',
+    };
+    await updateSessionMetadata(id, fields);
+    Object.assign(meta, fields);
+  }
+
+  const merged = { ...session, metadata: meta };
+  const order = buildOrder(merged, products);
+  const request = refundFrom(meta);
+  const shipment = shipmentFrom(meta);
+  const owner = ownerRefundRequest(order, request, shipment);
+  const tasks = [sendEmail({
+    from: FROM_ORDERS, to: [notifyAddress()], reply_to: order.email || REPLY_TO,
+    subject: owner.subject, html: owner.html, text: owner.text,
+  }, `refund-owner/${id}`)];
+  if (order.email) {
+    const c = customerRefundRequested(order, request, Boolean(shipment));
+    tasks.push(sendEmail({
+      from: FROM_ORDERS, to: [order.email], reply_to: REPLY_TO,
+      subject: c.subject, html: c.html, text: c.text,
+    }, `refund-customer/${id}`));
+  }
+  await Promise.all(tasks);
+  await updateSessionMetadata(id, { refund_email_sent: '1' });
+  meta.refund_email_sent = '1';
+  return buyerOrderView(merged, products);
+}
+
+// Emails a buyer the links to their orders. The result never says whether the
+// address has orders. The key allows one identical email per hour, across
+// instances, so the form can't be used to flood someone's inbox.
+async function emailOrderLinks(stripe, email, products) {
+  const wanted = String(email).trim().toLowerCase();
+  const found = [];
+  for await (const s of stripe.checkout.sessions.list({ limit: 100, created: { gte: SOLD_SINCE } })) {
+    if (s.metadata?.site !== SITE_TAG || !isFulfillable(s)) continue;
+    const o = buildOrder(s, products);
+    if (o.orderUrl && o.email && o.email.toLowerCase() === wanted) found.push({ ...o, id: s.id });
+  }
+  if (!found.length) return false;
+  const hour = Math.floor(Date.now() / 3600000);
+  const key = crypto.createHash('sha256').update(`${wanted}|${found.map(o => o.id).join(',')}|${hour}`).digest('hex');
+  const m = customerOrderLinks(found);
+  await sendEmail({
+    from: FROM_ORDERS, to: [found[0].email], reply_to: REPLY_TO,
+    subject: m.subject, html: m.html, text: m.text,
+  }, `order-lookup/${key}`);
+  return true;
 }
 
 // ─── Resend webhook signature (Svix scheme) ─────────────────
@@ -342,5 +423,5 @@ async function forwardInbound(data) {
 module.exports = {
   SITE_TAG, sessionMetadata, parseItems, getSoldIds, resetSoldCache, buildOrder,
   handleCheckoutCompleted, verifyResendSignature, forwardInbound, senderAddress,
-  listOrders, shipOrder, setRelisted, publicOrderView, verifyOrderToken, orderToken, OrderError, CARRIERS,
+  listOrders, shipOrder, setRelisted, publicOrderView, requestRefund, emailOrderLinks, verifyOrderToken, orderToken, OrderError, CARRIERS,
 };
