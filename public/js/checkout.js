@@ -30,10 +30,29 @@ function renderCheckoutSummary() {
     </div>
   `).join('');
 
-  const subtotal = Cart.getTotal();
-  document.querySelector('.summary-subtotal').textContent = `£${subtotal}`;
-  document.querySelector('.summary-total').textContent = `£${subtotal}`;
+  const subtotalPence = Math.round(Cart.getTotal() * 100);
+  const discount = Cart.getDiscountPence();
+  const v = Cart.getVoucher();
+  document.querySelector('.summary-subtotal').textContent = formatPence(subtotalPence);
+  document.querySelector('.summary-total').textContent = formatPence(subtotalPence - discount);
+
+  let line = document.querySelector('.summary-discount-line');
+  if (v && discount > 0) {
+    if (!line) {
+      line = document.createElement('div');
+      line.className = 'summary-line summary-discount-line';
+      const totalLine = document.querySelector('.summary-line.total');
+      totalLine.parentNode.insertBefore(line, totalLine);
+    }
+    line.innerHTML = `<span>Voucher · ${escapeHTML(v.code)} (${escapeHTML(v.label)})</span><span>−${formatPence(discount)}</span>`;
+  } else if (line) {
+    line.remove();
+  }
 }
+
+window.addEventListener('cartUpdated', () => {
+  if (document.querySelector('.summary-items')) renderCheckoutSummary();
+});
 
 async function payWithStripe() {
   const btn = document.getElementById('pay-btn');
@@ -47,9 +66,20 @@ async function payWithStripe() {
     const res = await fetch('/api/create-checkout-session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items: cart.map(i => ({ id: i.id, qty: i.qty })) })
+      body: JSON.stringify({
+        items: cart.map(i => ({ id: i.id, qty: i.qty })),
+        voucher: Cart.getDiscountPence() > 0 ? Cart.getVoucher().code : undefined
+      })
     });
     const data = await res.json();
+
+    if (data.voucherInvalid) {
+      Cart.clearVoucher();
+      btn.disabled = false;
+      btn.textContent = 'Pay with Stripe · 安全支付';
+      showToast(data.error + ' — voucher removed');
+      return;
+    }
 
     if (data.demo) {
       showToast('Demo mode — Stripe not configured yet. See STRIPE_SETUP.md');

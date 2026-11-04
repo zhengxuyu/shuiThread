@@ -1014,6 +1014,77 @@ body:hover .cursor-dot { opacity: 1; }
 }
 .btn-checkout:hover { background: var(--orange); transform: translateY(-2px); }
 
+/* ─── Voucher (cart panel) ─── */
+.cart-voucher {
+  margin-bottom: 1.1rem;
+  padding-bottom: 1.1rem;
+  border-bottom: 1px solid var(--border);
+}
+.cart-voucher-form { display: flex; gap: 0.5rem; }
+.cart-voucher-input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.65rem 0.8rem;
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  color: var(--ink);
+}
+.cart-voucher-input::placeholder { text-transform: none; letter-spacing: 0.04em; color: var(--ink-muted); }
+.cart-voucher-input:focus { outline: none; border-color: var(--teal); }
+@media (pointer: coarse) { .cart-voucher-input { font-size: 16px; } }
+.cart-voucher-apply {
+  padding: 0 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.cart-voucher-apply:hover:not(:disabled) { background: var(--ink); color: white; }
+.cart-voucher-apply:disabled { opacity: 0.5; cursor: default; }
+.cart-voucher-msg {
+  font-family: var(--font-mono);
+  font-size: 0.65rem;
+  letter-spacing: 0.04em;
+  color: var(--orange);
+  margin-top: 0.45rem;
+}
+.cart-voucher-msg:empty { display: none; }
+.cart-voucher-applied {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--teal);
+}
+.cart-voucher-code { text-transform: uppercase; }
+.cart-voucher-remove {
+  margin-top: 0.4rem;
+  padding: 0;
+  background: none;
+  border: none;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-muted);
+  text-decoration: underline;
+  cursor: pointer;
+}
+.cart-voucher-remove:hover { color: var(--orange); }
+.summary-discount-line { color: var(--teal); }
+
 /* ─── CHECKOUT PAGE ─── */
 .checkout-page {
   min-height: 100vh;

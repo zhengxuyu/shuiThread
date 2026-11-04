@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const { resolveVoucher, VoucherError } = require('./voucher');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -105,22 +106,21 @@ app.get('/api/products/:id', (req, res) => {
   res.json(product);
 });
 
-// Stripe Checkout Session — server resolves prices from catalog, never trusts client
-app.post('/api/create-checkout-session', async (req, res) => {
-  const { items } = req.body || {};
-  if (!Array.isArray(items) || items.length === 0) {
-    return res.status(400).json({ error: 'No items in cart' });
-  }
-
+// Build Stripe line items from the catalog — never trust client prices.
+function buildLineItems(items, req) {
+  if (!Array.isArray(items) || items.length === 0) return { error: 'No items in cart' };
   const lineItems = [];
+  let subtotalPence = 0;
   for (const { id, qty } of items) {
     const product = products.find(p => p.id === id);
-    if (!product) return res.status(400).json({ error: `Unknown product ${id}` });
+    if (!product) return { error: `Unknown product ${id}` };
     const quantity = Math.max(1, Math.min(parseInt(qty, 10) || 1, product.stock || 1));
+    const unit = Math.round(product.priceGBP * 100);
+    subtotalPence += unit * quantity;
     lineItems.push({
       price_data: {
         currency: 'gbp',
-        unit_amount: Math.round(product.priceGBP * 100),
+        unit_amount: unit,
         product_data: {
           name: product.name,
           description: product.nameZh,
@@ -130,17 +130,62 @@ app.post('/api/create-checkout-session', async (req, res) => {
       quantity
     });
   }
+  return { lineItems, subtotalPence };
+}
 
-  if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY.includes('your_stripe')) {
+function stripeConfigured() {
+  return !!process.env.STRIPE_SECRET_KEY && !process.env.STRIPE_SECRET_KEY.includes('your_stripe');
+}
+
+// Check a voucher against the current cart (used by the cart panel).
+app.post('/api/validate-voucher', async (req, res) => {
+  const { code, items } = req.body || {};
+  const built = buildLineItems(items, req);
+  if (built.error) return res.status(400).json({ error: built.error });
+  if (!stripeConfigured()) return res.status(503).json({ error: 'Vouchers are unavailable right now' });
+
+  try {
+    const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    const v = await resolveVoucher(stripe, code, built.subtotalPence);
+    res.json({
+      code: v.code, label: v.label,
+      percentOff: v.percentOff, amountOffPence: v.amountOffPence, minimumPence: v.minimumPence,
+      discountPence: v.discountPence
+    });
+  } catch (err) {
+    if (err instanceof VoucherError) return res.status(400).json({ error: err.message });
+    console.error('Voucher lookup error:', err.message);
+    res.status(500).json({ error: 'Could not check this voucher, please try again' });
+  }
+});
+
+// Stripe Checkout Session — server resolves prices from catalog, never trusts client
+app.post('/api/create-checkout-session', async (req, res) => {
+  const { items, voucher } = req.body || {};
+  const built = buildLineItems(items, req);
+  if (built.error) return res.status(400).json({ error: built.error });
+
+  if (!stripeConfigured()) {
     return res.json({ demo: true, message: 'Demo mode: STRIPE_SECRET_KEY not configured' });
   }
 
   try {
     const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+    let discounts;
+    if (voucher) {
+      try {
+        const v = await resolveVoucher(stripe, voucher, built.subtotalPence);
+        discounts = [{ promotion_code: v.promotionCodeId }];
+      } catch (err) {
+        if (err instanceof VoucherError) return res.status(400).json({ error: err.message, voucherInvalid: true });
+        throw err;
+      }
+    }
     const origin = `${req.protocol}://${req.get('host')}`;
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
-      line_items: lineItems,
+      line_items: built.lineItems,
+      ...(discounts ? { discounts } : {}),
       shipping_address_collection: { allowed_countries: ['GB'] },
       shipping_options: [
         { shipping_rate_data: { display_name: 'UK Standard Delivery', type: 'fixed_amount', fixed_amount: { amount: 0, currency: 'gbp' }, delivery_estimate: { minimum: { unit: 'business_day', value: 3 }, maximum: { unit: 'business_day', value: 7 } } } }
