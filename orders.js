@@ -20,6 +20,9 @@ const SOLD_CACHE_MS = 60 * 1000;
 
 const notifyAddress = () => process.env.ORDER_NOTIFY_EMAIL || DEFAULT_NOTIFY;
 
+// A voucher covering the whole order completes as 'no_payment_required'.
+const isFulfillable = s => s.payment_status === 'paid' || s.payment_status === 'no_payment_required';
+
 // ─── Session metadata ───────────────────────────────────────
 function sessionMetadata(items, voucher) {
   const meta = {
@@ -52,7 +55,7 @@ async function getSoldIds(stripe, { fresh = false } = {}) {
   if (stripe) {
     const sessions = stripe.checkout.sessions.list({ limit: 100, created: { gte: SOLD_SINCE } });
     for await (const s of sessions) {
-      if (s.metadata?.site !== SITE_TAG || s.payment_status !== 'paid') continue;
+      if (s.metadata?.site !== SITE_TAG || !isFulfillable(s)) continue;
       parseItems(s.metadata.items).forEach(i => ids.add(i.id));
     }
   }
@@ -132,7 +135,7 @@ async function sendOrderEmails(order, sessionId) {
 // Returns true if this session belongs to the shop and emails went out.
 async function handleCheckoutCompleted(session, products) {
   if (session.metadata?.site !== SITE_TAG) return false;
-  if (session.payment_status !== 'paid') return false;
+  if (!isFulfillable(session)) return false;
   resetSoldCache();
   await sendOrderEmails(buildOrder(session, products), session.id);
   return true;
