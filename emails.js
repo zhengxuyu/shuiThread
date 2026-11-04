@@ -364,7 +364,7 @@ function refundDate(iso) {
 function refundNextSteps(request, shipped) {
   if (request.reason === 'faulty') {
     return [
-      "We're sorry. Please reply to this email with a photo of the problem.",
+      `We're sorry. Please email ${CONTACT} with your order number and a photo of the problem.`,
       "We'll tell you what happens next. If the piece needs to come back, we pay the return postage.",
     ];
   }
@@ -505,7 +505,7 @@ function customerVoucher({ code, label: offer, expiresOn, maxRedemptions, messag
     maxRedemptions === 1 ? 'It can be used once.' : '',
     expiry ? `It expires on ${expiry}.` : '',
   ].filter(Boolean).join(' ');
-  const stop = 'To stop receiving offers from us, reply to this email and tell us.';
+  const stop = `To stop receiving offers from us, email ${CONTACT}.`;
   const seller = `Shui Thread is operated by ${SELLER}, ${SELLER_ADDRESS}.`;
   const para = `margin:0 0 16px;font-family:${SERIF};font-size:16px;line-height:1.7;color:${C.soft};`;
   const html = `<!DOCTYPE html>
