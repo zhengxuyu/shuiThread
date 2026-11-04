@@ -5,9 +5,15 @@
 //  that tag is ignored.
 // ═══════════════════════════════════════════
 const crypto = require('crypto');
-const { customerConfirmation, ownerNotification } = require('./emails');
+const { customerConfirmation, customerShipped, ownerNotification } = require('./emails');
 
 const SITE_TAG = 'shuithread';
+const SITE_URL = 'https://shuithread.com';
+const SESSION_ID = /^cs_(live|test)_[A-Za-z0-9]+$/;
+const CARRIERS = {
+  royal_mail: { name: 'Royal Mail', url: t => `https://www.royalmail.com/track-your-item#/tracking-results/${encodeURIComponent(t)}` },
+  dpd: { name: 'DPD', url: () => 'https://track.dpd.co.uk/' },
+};
 const RESEND_API = 'https://api.resend.com';
 const FROM_ORDERS = 'Shui Thread <noreply@shuithread.com>';
 const FROM_FORWARD = 'Shui Thread Inbox <noreply@shuithread.com>';
@@ -55,7 +61,7 @@ async function getSoldIds(stripe, { fresh = false } = {}) {
   if (stripe) {
     const sessions = stripe.checkout.sessions.list({ limit: 100, created: { gte: SOLD_SINCE } });
     for await (const s of sessions) {
-      if (s.metadata?.site !== SITE_TAG || !isFulfillable(s)) continue;
+      if (s.metadata?.site !== SITE_TAG || !isFulfillable(s) || s.metadata.relisted === '1') continue;
       parseItems(s.metadata.items).forEach(i => ids.add(i.id));
     }
   }
@@ -64,6 +70,35 @@ async function getSoldIds(stripe, { fresh = false } = {}) {
 }
 
 function resetSoldCache() { soldCache = { at: 0, ids: null }; }
+
+// ─── Signed customer order links ────────────────────────────
+function orderToken(sessionId) {
+  const secret = process.env.ORDER_LINK_SECRET;
+  if (!secret) return null;
+  return crypto.createHmac('sha256', secret).update(`order:${sessionId}`).digest('base64url');
+}
+
+function verifyOrderToken(sessionId, token) {
+  const expected = orderToken(sessionId);
+  if (!expected || typeof token !== 'string') return false;
+  const a = Buffer.from(token), b = Buffer.from(expected);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
+function orderUrl(sessionId) {
+  const t = orderToken(sessionId);
+  return t ? `${SITE_URL}/order.html?id=${encodeURIComponent(sessionId)}&t=${t}` : '';
+}
+
+function shipmentFrom(meta = {}) {
+  if (!meta.ship_tracking) return null;
+  const c = CARRIERS[meta.ship_carrier] || { name: meta.ship_carrier, url: () => '' };
+  return {
+    carrier: meta.ship_carrier, carrierName: c.name, tracking: meta.ship_tracking,
+    trackingUrl: c.url(meta.ship_tracking), shippedAt: meta.shipped_at || '',
+    emailSent: meta.ship_email_sent === '1',
+  };
+}
 
 // ─── Build an order from a paid session ─────────────────────
 function buildOrder(session, products) {
@@ -91,6 +126,7 @@ function buildOrder(session, products) {
     totalPence: session.amount_total || 0,
     voucher: session.metadata?.voucher || '',
     stripeUrl: pi ? `https://dashboard.stripe.com/payments/${pi}` : '',
+    orderUrl: orderUrl(session.id),
   };
 }
 
@@ -139,6 +175,106 @@ async function handleCheckoutCompleted(session, products) {
   resetSoldCache();
   await sendOrderEmails(buildOrder(session, products), session.id);
   return true;
+}
+
+// ─── Seller back office ─────────────────────────────────────
+// The SDK version in use has no sessions.update, so call the API directly.
+async function updateSessionMetadata(id, metadata) {
+  const body = new URLSearchParams();
+  Object.entries(metadata).forEach(([k, v]) => body.append(`metadata[${k}]`, v));
+  const res = await fetch(`https://api.stripe.com/v1/checkout/sessions/${encodeURIComponent(id)}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${process.env.STRIPE_SECRET_KEY}`, 'Content-Type': 'application/x-www-form-urlencoded' },
+    body,
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(`Stripe metadata update ${res.status}: ${data.error?.message || 'failed'}`);
+  return data;
+}
+
+function adminOrderView(session, products) {
+  const o = buildOrder(session, products);
+  return {
+    id: session.id, ref: o.ref, createdAt: session.created, customerName: o.customerName, email: o.email, phone: o.phone,
+    address: o.address, items: o.items, subtotalPence: o.subtotalPence, discountPence: o.discountPence, totalPence: o.totalPence,
+    voucher: o.voucher, stripeUrl: o.stripeUrl, orderUrl: o.orderUrl, relisted: session.metadata?.relisted === '1',
+    shipment: shipmentFrom(session.metadata),
+  };
+}
+
+async function listOrders(stripe, products) {
+  const out = [];
+  for await (const s of stripe.checkout.sessions.list({ limit: 100, created: { gte: SOLD_SINCE } })) {
+    if (s.metadata?.site === SITE_TAG && isFulfillable(s)) out.push(adminOrderView(s, products));
+  }
+  return out;
+}
+
+class OrderError extends Error {
+  constructor(status, message) { super(message); this.status = status; }
+}
+
+async function getShopSession(stripe, id) {
+  if (!SESSION_ID.test(String(id))) throw new OrderError(404, 'Order not found');
+  let s;
+  try { s = await stripe.checkout.sessions.retrieve(id); } catch { throw new OrderError(404, 'Order not found'); }
+  if (s.metadata?.site !== SITE_TAG || !isFulfillable(s)) throw new OrderError(404, 'Order not found');
+  return s;
+}
+
+async function shipOrder(stripe, id, { carrier, tracking } = {}, products) {
+  const c = CARRIERS[carrier];
+  const num = String(tracking || '').trim().replace(/\s+/g, ' ');
+  if (!c) throw new OrderError(400, '请选择快递公司');
+  if (!/^[A-Za-z0-9][A-Za-z0-9 -]{3,39}$/.test(num)) throw new OrderError(400, '快递单号格式不正确');
+
+  const session = await getShopSession(stripe, id);
+  const prev = shipmentFrom(session.metadata);
+  if (prev && prev.emailSent && prev.carrier === carrier && prev.tracking === num) {
+    throw new OrderError(409, '这个单号已经发过邮件了');
+  }
+
+  const shippedAt = session.metadata.shipped_at || new Date().toISOString();
+  // Record first: the tracking number must never be lost to a mail failure.
+  const updated = await updateSessionMetadata(id, {
+    ship_carrier: carrier, ship_tracking: num, shipped_at: shippedAt, ship_email_sent: '0',
+  });
+  const merged = { ...session, metadata: { ...session.metadata, ...(updated.metadata || {}) } };
+  const order = buildOrder(merged, products);
+  const m = customerShipped(order, shipmentFrom(merged.metadata));
+  if (order.email) {
+    await sendEmail({
+      from: FROM_ORDERS, to: [order.email], reply_to: REPLY_TO,
+      subject: m.subject, html: m.html, text: m.text,
+    }, `order-shipped/${id}/${carrier}/${num.replace(/[^A-Za-z0-9-]/g, '')}`);
+  }
+  await updateSessionMetadata(id, { ship_email_sent: '1' });
+  merged.metadata.ship_email_sent = '1';
+  return adminOrderView(merged, products);
+}
+
+async function setRelisted(stripe, id, relisted, products) {
+  const session = await getShopSession(stripe, id);
+  await updateSessionMetadata(id, { relisted: relisted ? '1' : '' });
+  resetSoldCache();
+  const meta = { ...session.metadata };
+  if (relisted) meta.relisted = '1'; else delete meta.relisted;
+  return adminOrderView({ ...session, metadata: meta }, products);
+}
+
+// What the buyer sees through their signed link. No email or phone.
+async function publicOrderView(stripe, id, token, products) {
+  if (!verifyOrderToken(id, token)) throw new OrderError(404, 'Order not found');
+  const session = await getShopSession(stripe, id);
+  const o = buildOrder(session, products);
+  const ship = shipmentFrom(session.metadata);
+  return {
+    ref: o.ref, createdAt: session.created, status: ship ? 'shipped' : 'confirmed',
+    customerName: o.customerName, address: o.address,
+    items: o.items.map(i => ({ name: i.name, nameZh: i.nameZh, img: i.img, qty: i.qty, amountPence: i.amountPence })),
+    subtotalPence: o.subtotalPence, discountPence: o.discountPence, shippingPence: o.shippingPence, totalPence: o.totalPence, voucher: o.voucher,
+    shipment: ship && { carrierName: ship.carrierName, tracking: ship.tracking, trackingUrl: ship.trackingUrl, shippedAt: ship.shippedAt },
+  };
 }
 
 // ─── Resend webhook signature (Svix scheme) ─────────────────
@@ -206,4 +342,5 @@ async function forwardInbound(data) {
 module.exports = {
   SITE_TAG, sessionMetadata, parseItems, getSoldIds, resetSoldCache, buildOrder,
   handleCheckoutCompleted, verifyResendSignature, forwardInbound, senderAddress,
+  listOrders, shipOrder, setRelisted, publicOrderView, verifyOrderToken, orderToken, OrderError, CARRIERS,
 };
