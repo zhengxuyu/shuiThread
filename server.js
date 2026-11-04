@@ -7,6 +7,7 @@ const {
   sessionMetadata, getSoldIds, handleCheckoutCompleted, verifyResendSignature, forwardInbound,
   listOrders, shipOrder, setRelisted, publicOrderView, requestRefund, emailOrderLinks, OrderError,
 } = require('./orders');
+const { listCoupons, createCoupon, setCouponActive, editCoupon, importCoupon, sendCoupon } = require('./coupons');
 const { adminLogin, adminLogout, requireAdmin, clientKey } = require('./admin');
 
 const app = express();
@@ -323,6 +324,21 @@ app.post('/api/admin/orders/:id/relist', requireAdmin, async (req, res) => {
     res.set('Cache-Control', 'no-store').json(await setRelisted(stripeClient(), req.params.id, req.body?.relisted !== false, products));
   } catch (err) { orderErrorResponse(res, err, 'Relist'); }
 });
+
+// Back office coupons. /import must stay above /:id.
+const couponRoute = (what, fn) => async (req, res) => {
+  res.set('Cache-Control', 'no-store');
+  if (!stripeConfigured()) return res.status(503).json({ error: 'Stripe 未配置' });
+  try {
+    res.json(await fn(stripeClient(), req));
+  } catch (err) { orderErrorResponse(res, err, what); }
+};
+app.get('/api/admin/coupons', requireAdmin, couponRoute('Coupon list', async s => ({ coupons: await listCoupons(s) })));
+app.post('/api/admin/coupons', requireAdmin, couponRoute('Coupon create', (s, req) => createCoupon(s, req.body)));
+app.post('/api/admin/coupons/import', requireAdmin, couponRoute('Coupon import', (s, req) => importCoupon(s, req.body?.code)));
+app.post('/api/admin/coupons/:id/active', requireAdmin, couponRoute('Coupon toggle', (s, req) => setCouponActive(s, req.params.id, req.body?.active)));
+app.post('/api/admin/coupons/:id/send', requireAdmin, couponRoute('Coupon send', (s, req) => sendCoupon(s, req.params.id, req.body)));
+app.post('/api/admin/coupons/:id', requireAdmin, couponRoute('Coupon edit', (s, req) => editCoupon(s, req.params.id, req.body)));
 
 // "Find your order": same answer and similar timing whether or not the address has orders.
 const LOOKUP_EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

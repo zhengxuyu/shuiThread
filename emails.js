@@ -75,7 +75,9 @@ function totals(order) {
   ].join('');
 }
 
-function sellerFooter(site) {
+const ORDER_FOOTER = `You're receiving this because you placed an order at shuithread.com. Shui Thread is operated by ${SELLER}, ${SELLER_ADDRESS}, the seller of your order and the name you may see on your card statement.`;
+
+function sellerFooter(site, note = ORDER_FOOTER) {
   return `  <tr><td class="pad" style="padding:26px 44px 30px;background:${C.ink};">
     <div style="font-family:${SERIF};font-size:18px;color:${C.white};">Shui Thread</div>
     <div style="padding-top:8px;font-family:${SERIF};font-size:13px;line-height:1.6;color:#B9B2A5;">
@@ -85,7 +87,7 @@ function sellerFooter(site) {
       <a href="${site}" style="color:#F7F3ED;">shuithread.com</a> &nbsp;·&nbsp; <a href="mailto:${CONTACT}" style="color:#F7F3ED;">${CONTACT}</a><br><a href="${site}/returns.html" style="color:#F7F3ED;">Returns &amp; after-sales</a>
     </div>
     <div style="padding-top:12px;font-family:${SERIF};font-size:12px;line-height:1.6;color:#8D8678;">
-      You're receiving this because you placed an order at shuithread.com. Shui Thread is operated by ${SELLER}, ${SELLER_ADDRESS}, the seller of your order and the name you may see on your card statement.
+      ${note}
     </div>
   </td></tr>`;
 }
@@ -492,4 +494,54 @@ ${sellerFooter(site)}
   return { subject, html, text };
 }
 
-module.exports = { customerConfirmation, customerShipped, ownerNotification, customerRefundRequested, ownerRefundRequest, customerOrderLinks, gbp };
+// ─── Customer: voucher ──────────────────────────────────────
+function customerVoucher({ code, label: offer, expiresOn, maxRedemptions, message }, site = DEFAULT_SITE) {
+  const subject = `A gift from Shui Thread: ${offer}`;
+  const expiry = expiresOn ? new Date(`${expiresOn}T12:00:00Z`).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }) : '';
+  const terms = [
+    maxRedemptions === 1 ? 'This code can be used once.' : '',
+    expiry ? `It expires on ${expiry}.` : '',
+    'Each piece is one of a kind, so availability is limited.',
+  ].filter(Boolean).join(' ');
+  const stop = 'To stop receiving offers from us, reply to this email and tell us.';
+  const html = `<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="color-scheme" content="light only"><title>${esc(subject)}</title></head>
+<body style="margin:0;padding:0;background:${C.parchment};">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${C.parchment};">
+<tr><td align="center" style="padding:24px 12px;">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" border="0" style="width:100%;max-width:600px;background:${C.cream};">
+  <tr><td class="pad" style="padding:30px 44px 26px;">
+    <a href="${site}" style="text-decoration:none;"><img src="${site}/imgs/email/logo.png" width="172" alt="Shui Thread · 水丝线马尾绣" style="display:block;width:172px;height:auto;border:0;"></a>
+  </td></tr>
+  <tr><td><img src="${site}/imgs/email/hero.jpg" width="600" alt="Shui horsetail hair embroidery, close up" style="display:block;width:100%;max-width:600px;height:auto;border:0;"></td></tr>
+  <tr><td class="pad" style="padding:42px 44px 0;">
+    <div style="font-family:${MONO};font-size:11px;letter-spacing:2.6px;text-transform:uppercase;color:${C.orange};padding-bottom:14px;">A gift for you · 专属优惠</div>
+    <h1 style="margin:0;font-family:${SERIF};font-weight:normal;font-size:42px;line-height:1.08;letter-spacing:-0.5px;color:${C.ink};">${esc(offer)} your next piece.</h1>
+    ${message ? `<p style="margin:18px 0 0;font-family:${SERIF};font-size:16px;line-height:1.7;color:${C.soft};">${esc(message).replace(/\n/g, '<br>')}</p>` : ''}
+  </td></tr>
+  <tr><td class="pad" style="padding:28px 44px 0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" border="0" style="background:${C.parchment};">
+      <tr><td align="center" style="padding:24px;">
+        ${label('Your code')}
+        <div style="padding-top:10px;font-family:${MONO};font-size:26px;letter-spacing:2px;color:${C.ink};">${esc(code)}</div>
+      </td></tr>
+    </table>
+    <p style="margin:14px 0 0;font-family:${SERIF};font-size:15px;line-height:1.7;color:${C.soft};">Enter it in your cart before checkout. ${esc(terms)}</p>
+  </td></tr>
+  <tr><td class="pad" style="padding:26px 44px 42px;">${button(`${site}/collection.html`, 'See the collection →')}</td></tr>
+${sellerFooter(site, `You're receiving this offer from Shui Thread. ${stop} Shui Thread is operated by ${SELLER}, ${SELLER_ADDRESS}.`)}
+</table>
+</td></tr>
+</table>
+</body></html>`;
+  const text = [
+    `${offer} your next piece from Shui Thread.`, '',
+    ...(message ? [message, ''] : []),
+    `Your code: ${code}`, `Enter it in your cart before checkout. ${terms}`, '',
+    `See the collection: ${site}/collection.html`, '',
+    stop, `Shui Thread is operated by ${SELLER}, ${SELLER_ADDRESS}.`,
+  ].join('\n');
+  return { subject, html, text };
+}
+
+module.exports = { customerConfirmation, customerShipped, ownerNotification, customerRefundRequested, ownerRefundRequest, customerOrderLinks, customerVoucher, gbp };

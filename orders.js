@@ -423,5 +423,5 @@ async function forwardInbound(data) {
 module.exports = {
   SITE_TAG, sessionMetadata, parseItems, getSoldIds, resetSoldCache, buildOrder,
   handleCheckoutCompleted, verifyResendSignature, forwardInbound, senderAddress,
-  listOrders, shipOrder, setRelisted, publicOrderView, requestRefund, emailOrderLinks, verifyOrderToken, orderToken, OrderError, CARRIERS,
+  listOrders, shipOrder, setRelisted, publicOrderView, requestRefund, emailOrderLinks, sendEmail, verifyOrderToken, orderToken, OrderError, CARRIERS,
 };
