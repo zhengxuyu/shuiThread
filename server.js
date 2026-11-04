@@ -5,7 +5,9 @@ const path = require('path');
 const { resolveVoucher, VoucherError } = require('./voucher');
 const {
   sessionMetadata, getSoldIds, handleCheckoutCompleted, verifyResendSignature, forwardInbound,
+  listOrders, shipOrder, setRelisted, publicOrderView, OrderError,
 } = require('./orders');
+const { adminLogin, adminLogout, requireAdmin } = require('./admin');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -289,6 +291,46 @@ app.post('/api/resend-inbound', async (req, res) => {
     console.error('Inbound forward error:', err.message);
     res.status(500).json({ error: 'Forward failed' });
   }
+});
+
+// ─── Seller back office ─────────────────────────────────────
+function orderErrorResponse(res, err, what) {
+  if (err instanceof OrderError) return res.status(err.status).json({ error: err.message });
+  console.error(`${what} error:`, err.message);
+  res.status(500).json({ error: '操作失败，请重试' });
+}
+
+app.post('/api/admin/login', adminLogin);
+app.post('/api/admin/logout', adminLogout);
+
+app.get('/api/admin/orders', requireAdmin, async (req, res) => {
+  try {
+    const orders = await listOrders(stripeClient(), products);
+    res.set('Cache-Control', 'no-store').json({ orders, carriers: [
+      { id: 'royal_mail', name: 'Royal Mail' }, { id: 'dpd', name: 'DPD' },
+    ] });
+  } catch (err) { orderErrorResponse(res, err, 'Order list'); }
+});
+
+app.post('/api/admin/orders/:id/ship', requireAdmin, async (req, res) => {
+  try {
+    res.set('Cache-Control', 'no-store').json(await shipOrder(stripeClient(), req.params.id, req.body, products));
+  } catch (err) { orderErrorResponse(res, err, 'Ship order'); }
+});
+
+app.post('/api/admin/orders/:id/relist', requireAdmin, async (req, res) => {
+  try {
+    res.set('Cache-Control', 'no-store').json(await setRelisted(stripeClient(), req.params.id, req.body?.relisted !== false, products));
+  } catch (err) { orderErrorResponse(res, err, 'Relist'); }
+});
+
+// Buyer's order page, reached through the signed link in their email.
+app.get('/api/orders/:id', async (req, res) => {
+  res.set({ 'Cache-Control': 'no-store', 'Referrer-Policy': 'no-referrer' });
+  if (!stripeConfigured()) return res.status(404).json({ error: 'Order not found' });
+  try {
+    res.json(await publicOrderView(stripeClient(), req.params.id, req.query.t, products));
+  } catch (err) { orderErrorResponse(res, err, 'Order view'); }
 });
 
 // SPA fallback - serve index for any unmatched routes

@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex,nofollow">
+  <meta name="referrer" content="no-referrer">
+  <title>订单后台 — Shui Thread</title>
+  <style>
+    :root { --ink:#0D0D0D; --soft:#2A2A2A; --muted:#6B6558; --cream:#F7F3ED; --parch:#EDE7DC; --line:#E2DBCF; --orange:#D94E1F; --teal:#0A6464; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--cream); color: var(--ink); font: 15px/1.55 -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif; }
+    header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; background: var(--ink); color: #fff; }
+    header b { font-family: Georgia, serif; font-weight: 400; font-size: 18px; }
+    button, input, select { font: inherit; }
+    button { cursor: pointer; border-radius: 3px; padding: 9px 14px; border: 1px solid var(--ink); background: var(--ink); color: #fff; }
+    button.ghost { background: transparent; color: var(--ink); }
+    header button { border-color: #666; background: transparent; }
+    button:disabled { opacity: .5; cursor: default; }
+    input, select { padding: 9px 10px; border: 1px solid #C9C1B3; border-radius: 3px; background: #fff; min-width: 0; font-size: 16px; }
+    main { max-width: 860px; margin: 0 auto; padding: 20px 16px 60px; }
+    .login { max-width: 340px; margin: 12vh auto; display: grid; gap: 12px; }
+    .err { color: var(--orange); font-size: 14px; min-height: 1.3em; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .tabs button { background: transparent; color: var(--ink); }
+    .tabs button.on { background: var(--ink); color: #fff; }
+    .card { background: #fff; border: 1px solid var(--line); border-radius: 4px; padding: 16px; margin-bottom: 14px; }
+    .top { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+    .ref { font-family: ui-monospace, Menlo, monospace; font-size: 13px; color: var(--muted); }
+    .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 12px; background: var(--parch); }
+    .badge.todo { background: #FBE8DF; color: var(--orange); }
+    .badge.done { background: #D4ECEC; color: var(--teal); }
+    .items { margin: 10px 0; font-weight: 600; }
+    .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; font-size: 14px; }
+    .k { color: var(--muted); font-size: 12px; }
+    .ship { display: grid; grid-template-columns: 140px 1fr auto; gap: 8px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); }
+    .tracked { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); font-size: 14px; }
+    .row { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 10px; font-size: 13px; }
+    .row a { color: var(--teal); }
+    .link { padding: 0; border: 0; background: none; color: var(--teal); text-decoration: underline; font-size: 13px; }
+    .warn { color: var(--orange); font-size: 13px; margin-top: 6px; }
+    .empty { color: var(--muted); padding: 40px 0; text-align: center; }
+    @media (max-width: 600px) { .grid, .ship { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<header><b>Shui Thread · 订单后台</b><button id="logout" hidden>退出</button></header>
+<main id="app"></main>
+<script>
+const app = document.getElementById('app'), logoutBtn = document.getElementById('logout');
+const e = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const gbp = p => '£' + (p % 100 === 0 ? p / 100 : (p / 100).toFixed(2));
+let orders = [], carriers = [], tab = 'todo', editing = null;
+const api = async (url, body) => {
+  const r = await fetch(url, body === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const data = await r.json().catch(() => ({}));
+  if (r.status === 401 && !url.endsWith('/login')) { showLogin(); throw new Error('请先登录'); }
+  if (!r.ok) throw new Error(data.error || '操作失败');
+  return data;
+};
+function showLogin() {
+  logoutBtn.hidden = true;
+  app.innerHTML = '<form class="login"><h2 style="margin:0;font-family:Georgia,serif;font-weight:400">登录</h2><input type="password" placeholder="密码" autocomplete="current-password" required><button>登录</button><div class="err"></div></form>';
+  const f = app.querySelector('form');
+  f.onsubmit = async ev => {
+    ev.preventDefault();
+    f.querySelector('.err').textContent = '';
+    try { await api('/api/admin/login', { password: f.querySelector('input').value }); await load(); }
+    catch (err) { f.querySelector('.err').textContent = err.message; }
+  };
+  f.querySelector('input').focus();
+}
+async function load() {
+  const d = await api('/api/admin/orders');
+  orders = d.orders; carriers = d.carriers;
+  logoutBtn.hidden = false;
+  render();
+}
+const isDone = o => o.shipment && o.shipment.emailSent;
+function shipForm(o) {
+  const s = o.shipment;
+  return `<form class="ship" data-id="${e(o.id)}">
+    <select name="carrier">${carriers.map(c => `<option value="${e(c.id)}" ${s && s.carrier === c.id ? 'selected' : ''}>${e(c.name)}</option>`).join('')}</select>
+    <input name="tracking" placeholder="快递单号" value="${e(s ? s.tracking : '')}" autocomplete="off" required>
+    <button>${isDone(o) ? '更正并重发邮件' : '标记已发货并通知买家'}</button>
+    <div class="err" style="grid-column:1/-1"></div>
+  </form>`;
+}
+function card(o) {
+  const a = o.address || {};
+  const addr = [o.customerName, a.line1, a.line2, a.city, a.state, a.postal_code, a.country].filter(Boolean);
+  const s = o.shipment;
+  const done = isDone(o);
+  const when = new Date(o.createdAt * 1000).toLocaleString('zh-CN', { dateStyle: 'medium', timeStyle: 'short' });
+  return `<div class="card">
+    <div class="top"><div><span class="ref">${e(o.ref)}</span> · ${e(when)}</div>
+      <div><span class="badge ${done ? 'done' : 'todo'}">${done ? '已发货' : s ? '已记录，邮件未发出' : '待发货'}</span>${o.relisted ? ' <span class="badge">已重新上架</span>' : ''}</div></div>
+    <div class="items">${o.items.map(i => e(i.name) + (i.qty > 1 ? ' ×' + e(i.qty) : '')).join('，')}</div>
+    <div class="grid">
+      <div><div class="k">寄送地址（点击可选中复制）</div><div style="user-select:all">${addr.map(e).join('<br>')}</div></div>
+      <div><div class="k">联系方式</div><div>${e(o.email)}<br>${e(o.phone || '—')}</div>
+        <div class="k" style="margin-top:8px">实付</div><div>${gbp(o.totalPence)}${o.discountPence > 0 ? `（优惠码 ${e(o.voucher)} −${gbp(o.discountPence)}）` : ''}</div></div>
+    </div>
+    ${done && editing !== o.id
+      ? `<div class="tracked">${e(s.carrierName)}：<b>${e(s.tracking)}</b> · 发货邮件已发送 · <button type="button" class="link" data-edit="${e(o.id)}">更正单号</button></div>`
+      : shipForm(o)}
+    ${s && !done ? '<div class="warn">单号已保存，但发货邮件没有发出，请再点一次按钮重发。</div>' : ''}
+    <div class="row">
+      ${o.stripeUrl ? `<a href="${e(o.stripeUrl)}" target="_blank" rel="noopener">在 Stripe 查看</a>` : ''}
+      ${o.orderUrl ? `<a href="${e(o.orderUrl)}" target="_blank" rel="noopener noreferrer">买家看到的页面</a>` : ''}
+      <button type="button" class="link" data-relist="${e(o.id)}" data-v="${o.relisted ? '0' : '1'}">${o.relisted ? '撤销重新上架' : '作品重新上架（退货/测试单）'}</button>
+    </div>
+  </div>`;
+}
+function render() {
+  const list = orders.filter(o => tab === 'all' || (tab === 'todo' ? !isDone(o) : isDone(o)));
+  const n = orders.filter(o => !isDone(o)).length;
+  app.innerHTML = `<div class="tabs">
+    <button data-tab="todo" class="${tab === 'todo' ? 'on' : ''}">待发货 (${n})</button>
+    <button data-tab="done" class="${tab === 'done' ? 'on' : ''}">已发货 (${orders.length - n})</button>
+    <button data-tab="all" class="${tab === 'all' ? 'on' : ''}">全部 (${orders.length})</button></div>
+    ${list.map(card).join('') || '<div class="empty">没有订单</div>'}`;
+}
+app.addEventListener('click', async ev => {
+  const t = ev.target;
+  if (t.dataset.tab) { tab = t.dataset.tab; editing = null; render(); }
+  if (t.dataset.edit) { editing = t.dataset.edit; render(); }
+  if (t.dataset.relist) {
+    const on = t.dataset.v === '1';
+    if (!confirm(on ? '确定把这笔订单里的作品重新上架吗？确认后别人就能再次购买。' : '确定撤销吗？作品会重新显示已售。')) return;
+    t.disabled = true;
+    try {
+      const u = await api('/api/admin/orders/' + encodeURIComponent(t.dataset.relist) + '/relist', { relisted: on });
+      orders = orders.map(o => o.id === u.id ? u : o); render();
+    } catch (err) { alert(err.message); t.disabled = false; }
+  }
+});
+app.addEventListener('submit', async ev => {
+  const f = ev.target;
+  if (!f.classList.contains('ship')) return;
+  ev.preventDefault();
+  const b = f.querySelector('button'), msg = f.querySelector('.err');
+  const carrier = f.carrier.value, tracking = f.tracking.value.trim();
+  const name = carriers.find(c => c.id === carrier).name;
+  if (!confirm(`确认发送发货邮件给买家？\n\n${name}：${tracking}`)) return;
+  b.disabled = true; msg.textContent = '';
+  try {
+    const u = await api('/api/admin/orders/' + encodeURIComponent(f.dataset.id) + '/ship', { carrier, tracking });
+    orders = orders.map(o => o.id === u.id ? u : o); editing = null; render();
+  } catch (err) {
+    msg.textContent = err.message; b.disabled = false;
+  }
+});
+logoutBtn.onclick = async () => { await api('/api/admin/logout', {}).catch(() => {}); showLogin(); };
+load().catch(() => {});
+</script>
+</body>
+</html>
