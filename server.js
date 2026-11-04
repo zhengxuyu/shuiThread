@@ -3,12 +3,16 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const { resolveVoucher, VoucherError } = require('./voucher');
+const {
+  sessionMetadata, getSoldIds, handleCheckoutCompleted, verifyResendSignature, forwardInbound,
+} = require('./orders');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(cors());
-app.use(express.json());
+// Keep the raw bytes: webhook signatures are computed over them.
+app.use(express.json({ verify: (req, res, buf) => { req.rawBody = buf; } }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Products catalog
@@ -96,20 +100,39 @@ const products = [
 ];
 
 // API routes
-app.get('/api/products', (req, res) => {
-  res.json(products);
+function stripeClient() {
+  return stripeConfigured() ? require('stripe')(process.env.STRIPE_SECRET_KEY) : null;
+}
+
+// A failed lookup must not take the shop down: show everything as available
+// and rely on the check at checkout.
+async function soldIdsOrEmpty() {
+  try {
+    return await getSoldIds(stripeClient());
+  } catch (err) {
+    console.error('Sold lookup error:', err.message);
+    return new Set();
+  }
+}
+
+const withSold = (p, sold) => ({ ...p, sold: sold.has(p.id) });
+
+app.get('/api/products', async (req, res) => {
+  const sold = await soldIdsOrEmpty();
+  res.json(products.map(p => withSold(p, sold)));
 });
 
-app.get('/api/products/:id', (req, res) => {
+app.get('/api/products/:id', async (req, res) => {
   const product = products.find(p => p.id === req.params.id);
   if (!product) return res.status(404).json({ error: 'Product not found' });
-  res.json(product);
+  res.json(withSold(product, await soldIdsOrEmpty()));
 });
 
 // Build Stripe line items from the catalog — never trust client prices.
 function buildLineItems(items, req) {
   if (!Array.isArray(items) || items.length === 0) return { error: 'No items in cart' };
   const lineItems = [];
+  const quantities = [];
   let subtotalPence = 0;
   for (const { id, qty } of items) {
     const product = products.find(p => p.id === id);
@@ -117,6 +140,7 @@ function buildLineItems(items, req) {
     const quantity = Math.max(1, Math.min(parseInt(qty, 10) || 1, product.stock || 1));
     const unit = Math.round(product.priceGBP * 100);
     subtotalPence += unit * quantity;
+    quantities.push({ id, qty: quantity });
     lineItems.push({
       price_data: {
         currency: 'gbp',
@@ -130,7 +154,7 @@ function buildLineItems(items, req) {
       quantity
     });
   }
-  return { lineItems, subtotalPence };
+  return { lineItems, subtotalPence, quantities, ids: quantities.map(q => q.id) };
 }
 
 function stripeConfigured() {
@@ -171,6 +195,19 @@ app.post('/api/create-checkout-session', async (req, res) => {
 
   try {
     const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+
+    let sold = new Set();
+    try {
+      sold = await getSoldIds(stripe, { fresh: true });
+    } catch (err) {
+      console.error('Sold lookup error at checkout:', err.message);
+    }
+    const unavailable = built.ids.filter(id => sold.has(id));
+    if (unavailable.length) {
+      const names = unavailable.map(id => products.find(p => p.id === id).name).join(', ');
+      return res.status(409).json({ error: `Sorry, this piece has just sold: ${names}`, soldIds: unavailable });
+    }
+
     let discounts;
     if (voucher) {
       try {
@@ -193,6 +230,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
         ? { payment_method_configuration: process.env.STRIPE_PAYMENT_METHOD_CONFIG }
         : { payment_method_types: ['card'] }),
       line_items: built.lineItems,
+      metadata: sessionMetadata(built.quantities, discounts ? voucher : undefined),
       ...(discounts ? { discounts } : {}),
       shipping_address_collection: { allowed_countries: ['GB'] },
       shipping_options: [
@@ -206,6 +244,49 @@ app.post('/api/create-checkout-session', async (req, res) => {
   } catch (err) {
     console.error('Stripe error:', err.message);
     res.status(500).json({ error: err.message });
+  }
+});
+
+// Stripe → payment finished. A non-2xx makes Stripe retry, which is what we
+// want if email sending failed; idempotency keys prevent double sends.
+app.post('/api/stripe-webhook', async (req, res) => {
+  const secret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!secret || !stripeConfigured()) return res.status(503).json({ error: 'Webhook not configured' });
+
+  let event;
+  try {
+    event = stripeClient().webhooks.constructEvent(req.rawBody, req.headers['stripe-signature'], secret);
+  } catch (err) {
+    console.error('Stripe webhook signature error:', err.message);
+    return res.status(400).json({ error: 'Invalid signature' });
+  }
+
+  if (event.type !== 'checkout.session.completed' && event.type !== 'checkout.session.async_payment_succeeded') {
+    return res.json({ received: true });
+  }
+  try {
+    await handleCheckoutCompleted(event.data.object, products);
+    res.json({ received: true });
+  } catch (err) {
+    console.error('Order handling error:', err.message);
+    res.status(500).json({ error: 'Order handling failed' });
+  }
+});
+
+// Resend → mail arrived at @shuithread.com; forward it to the real inbox.
+app.post('/api/resend-inbound', async (req, res) => {
+  const secret = process.env.RESEND_WEBHOOK_SECRET;
+  if (!secret || !process.env.RESEND_API_KEY) return res.status(503).json({ error: 'Webhook not configured' });
+  if (!verifyResendSignature(req.rawBody && req.rawBody.toString('utf8'), req.headers, secret)) {
+    return res.status(400).json({ error: 'Invalid signature' });
+  }
+  if (req.body?.type !== 'email.received') return res.json({ received: true });
+  try {
+    await forwardInbound(req.body.data || {});
+    res.json({ received: true });
+  } catch (err) {
+    console.error('Inbound forward error:', err.message);
+    res.status(500).json({ error: 'Forward failed' });
   }
 });
 

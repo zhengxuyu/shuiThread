@@ -73,6 +73,15 @@ async function payWithStripe() {
     });
     const data = await res.json();
 
+    if (res.status === 409 && Array.isArray(data.soldIds)) {
+      data.soldIds.forEach(id => Cart.removeItem(id));
+      btn.disabled = false;
+      btn.textContent = 'Pay with Stripe · 安全支付';
+      showToast(data.error);
+      if (Cart.getCount() === 0) setTimeout(() => { window.location.href = '/collection.html'; }, 2500);
+      return;
+    }
+
     if (data.voucherInvalid) {
       Cart.clearVoucher();
       btn.disabled = false;
