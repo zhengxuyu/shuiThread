@@ -1,7 +1,7 @@
 // ═══════════════════════════════════════════
 //  SHUI THREAD — Vouchers (Stripe Promotion Codes)
-//  Codes are created/managed in the Stripe Dashboard:
-//  Products → Coupons → (coupon) → Add promotion code.
+//  Codes are created and sent from the back office (coupons.js). Codes made in
+//  the Stripe Dashboard also work here.
 // ═══════════════════════════════════════════
 
 // Pure: discount in pence for a coupon shape against a subtotal in pence.

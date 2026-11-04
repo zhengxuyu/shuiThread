@@ -41,8 +41,19 @@
     .warn { color: var(--orange); font-size: 13px; margin-top: 6px; }
     .refund { margin-top: 12px; padding: 10px 12px; background: #FBE8DF; border-radius: 3px; font-size: 14px; }
     .refund b { color: var(--orange); }
+    .tabs .gap { flex-basis: 12px; }
+    .form { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .form label { display: grid; gap: 4px; font-size: 13px; color: var(--muted); }
+    .form .wide { grid-column: 1 / -1; }
+    .form input, .form select, .form textarea { width: 100%; color: var(--ink); }
+    textarea { font: inherit; font-size: 16px; padding: 9px 10px; border: 1px solid #C9C1B3; border-radius: 3px; resize: vertical; }
+    h3 { margin: 0 0 12px; font-family: Georgia, serif; font-weight: 400; font-size: 20px; }
+    .hint { font-size: 13px; color: var(--muted); margin: 0; }
+    .ok { color: var(--teal); font-size: 14px; }
+    .code { font-family: ui-monospace, Menlo, monospace; font-size: 16px; font-weight: 600; }
+    .actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
     .empty { color: var(--muted); padding: 40px 0; text-align: center; }
-    @media (max-width: 600px) { .grid, .ship { grid-template-columns: 1fr; } }
+    @media (max-width: 600px) { .form, .grid, .ship { grid-template-columns: 1fr; } }
   </style>
 </head>
 <body>
@@ -53,6 +64,7 @@ const app = document.getElementById('app'), logoutBtn = document.getElementById(
 const e = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const gbp = p => '£' + (p % 100 === 0 ? p / 100 : (p / 100).toFixed(2));
 let orders = [], carriers = [], tab = 'todo', editing = null;
+let coupons = null, couponErr = '', editingCoupon = null, sentMsg = '';
 const api = async (url, body) => {
   const r = await fetch(url, body === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
   const data = await r.json().catch(() => ({}));
@@ -123,19 +135,99 @@ function card(o) {
     </div>
   </div>`;
 }
-function render() {
-  const list = orders.filter(o => tab === 'all' || (tab === 'refund' ? o.refund : tab === 'todo' ? !isDone(o) : isDone(o)));
+function tabsBar() {
   const n = orders.filter(o => !isDone(o)).length;
-  app.innerHTML = `<div class="tabs">
-    <button data-tab="todo" class="${tab === 'todo' ? 'on' : ''}">待发货 (${n})</button>
-    <button data-tab="done" class="${tab === 'done' ? 'on' : ''}">已发货 (${orders.length - n})</button>
-    <button data-tab="refund" class="${tab === 'refund' ? 'on' : ''}">退款申请 (${orders.filter(o => o.refund).length})</button>
-    <button data-tab="all" class="${tab === 'all' ? 'on' : ''}">全部 (${orders.length})</button></div>
+  const b = (id, text) => `<button data-tab="${id}" class="${tab === id ? 'on' : ''}">${text}</button>`;
+  return `<div class="tabs">${b('todo', `待发货 (${n})`)}${b('done', `已发货 (${orders.length - n})`)}${b('refund', `退款申请 (${orders.filter(o => o.refund).length})`)}${b('all', `全部 (${orders.length})`)}
+    <span class="gap"></span>${b('send', '发送优惠券')}${b('coupons', '优惠券管理')}</div>`;
+}
+const couponTerms = c => `${c.maxRedemptions ? `可用 ${c.maxRedemptions} 次，已用 ${c.timesRedeemed} 次` : `不限次数，已用 ${c.timesRedeemed} 次`} · ${c.expiresOn ? `${c.expiresOn} 到期` : '不过期'}`;
+const couponStatus = c => !c.active ? '已停用' : c.expired ? '已过期' : c.usedUp ? '已用完' : '可用';
+function sendView() {
+  if (!coupons) return `<div class="empty">${couponErr ? e(couponErr) : '加载中…'}</div>`;
+  const ok = coupons.filter(c => c.sendable);
+  if (!ok.length) return '<div class="card">没有可发送的优惠券。请先到“优惠券管理”新建或导入一张。</div>';
+  return `<form class="card form" id="send-form">
+    <h3 class="wide" style="margin:0">发送优惠券</h3>
+    <label class="wide">收件人邮箱<input name="email" type="email" required autocomplete="off"></label>
+    <label class="wide">优惠券<select name="coupon">${ok.map(c => `<option value="${e(c.id)}">${e(c.code)} · ${e(c.label)} · ${e(couponTerms(c))}${c.sentCount ? ` · 已发 ${c.sentCount} 次` : ''}</option>`).join('')}</select></label>
+    <label class="wide">附言（可选，英文，会显示在邮件里）<textarea name="message" rows="3" maxlength="500"></textarea></label>
+    <p class="hint wide">请只发给同意接收优惠信息的人，或买过我们作品、也没有要求退订的客户。对方回复要求退订后，不要再发。</p>
+    <div class="wide actions"><button>发送</button><span class="ok">${e(sentMsg)}</span><span class="err" style="min-height:0"></span></div>
+  </form>`;
+}
+function couponFields(c) {
+  const v = c || { kind: 'amount', value: '', maxRedemptions: 1, expiresOn: '', note: '' };
+  return `<label>优惠类型<select name="kind"><option value="amount" ${v.kind === 'amount' ? 'selected' : ''}>减固定金额（£）</option><option value="percent" ${v.kind === 'percent' ? 'selected' : ''}>打折（减 %）</option></select></label>
+    <label>数值（如 10 表示减 £10 或减 10%）<input name="value" type="number" min="0.01" step="0.01" required value="${e(v.value)}"></label>
+    <label>可用次数（留空为不限）<input name="maxRedemptions" type="number" min="1" step="1" value="${e(v.maxRedemptions == null ? '' : v.maxRedemptions)}"></label>
+    <label>到期日期（留空为不过期）<input name="expiresOn" type="date" value="${e(v.expiresOn)}"></label>
+    <label class="wide">内部备注（买家看不到）<input name="note" maxlength="200" value="${e(v.note)}"></label>`;
+}
+function couponCard(c) {
+  if (editingCoupon === c.id) {
+    return `<form class="card form coupon-edit" data-id="${e(c.id)}">
+      <h3 class="wide code" style="margin:0">${e(c.code)}</h3>
+      ${c.timesRedeemed ? '<p class="hint wide">这张券已被用过，只能改备注。要改优惠内容，请停用后新建。</p>' : ''}
+      ${couponFields(c)}
+      <div class="wide actions"><button>保存</button><button type="button" class="ghost" data-cancel-coupon="1">取消</button><span class="err" style="min-height:0"></span></div>
+    </form>`;
+  }
+  return `<div class="card">
+    <div class="top"><div><span class="code">${e(c.code)}</span> · ${e(c.label)}</div><span class="badge ${c.sendable ? 'done' : ''}">${couponStatus(c)}</span></div>
+    <div style="font-size:14px;margin-top:8px">${e(couponTerms(c))}</div>
+    ${c.note ? `<div class="hint" style="margin-top:4px">${e(c.note)}</div>` : ''}
+    ${c.sentCount ? `<div class="hint" style="margin-top:4px">已发 ${c.sentCount} 次，最近发给 ${e(c.lastSentTo)}</div>` : ''}
+    <div class="row"><button type="button" class="link" data-edit-coupon="${e(c.id)}">修改</button>
+      <button type="button" class="link" data-active-coupon="${e(c.id)}" data-v="${c.active ? '0' : '1'}">${c.active ? '停用' : '重新启用'}</button></div>
+  </div>`;
+}
+function couponsView() {
+  if (!coupons) return `<div class="empty">${couponErr ? e(couponErr) : '加载中…'}</div>`;
+  return `<form class="card form" id="coupon-new">
+      <h3 class="wide" style="margin:0">新建优惠券</h3>
+      <label class="wide">券码（留空自动生成）<input name="code" maxlength="32" autocomplete="off" style="text-transform:uppercase"></label>
+      ${couponFields()}
+      <div class="wide actions"><button>创建</button><span class="err" style="min-height:0"></span></div>
+    </form>
+    ${coupons.map(couponCard).join('') || '<div class="empty">还没有优惠券</div>'}
+    <form class="card form" id="coupon-import">
+      <label class="wide">导入在 Stripe 后台建的券码<input name="code" required autocomplete="off"></label>
+      <div class="wide actions"><button class="ghost">导入</button><span class="err" style="min-height:0"></span></div>
+    </form>`;
+}
+async function loadCoupons() {
+  couponErr = '';
+  try { coupons = (await api('/api/admin/coupons')).coupons; }
+  catch (err) { couponErr = err.message; }
+  if (tab === 'send' || tab === 'coupons') render();
+}
+function render() {
+  if (tab === 'send' || tab === 'coupons') {
+    app.innerHTML = tabsBar() + (tab === 'send' ? sendView() : couponsView());
+    return;
+  }
+  const list = orders.filter(o => tab === 'all' || (tab === 'refund' ? o.refund : tab === 'todo' ? !isDone(o) : isDone(o)));
+  app.innerHTML = `${tabsBar()}
     ${list.map(card).join('') || '<div class="empty">没有订单</div>'}`;
 }
 app.addEventListener('click', async ev => {
   const t = ev.target;
-  if (t.dataset.tab) { tab = t.dataset.tab; editing = null; render(); }
+  if (t.dataset.tab) {
+    tab = t.dataset.tab; editing = null; editingCoupon = null; sentMsg = ''; render();
+    if ((tab === 'send' || tab === 'coupons') && !coupons) loadCoupons();
+  }
+  if (t.dataset.editCoupon) { editingCoupon = t.dataset.editCoupon; render(); }
+  if (t.dataset.cancelCoupon) { editingCoupon = null; render(); }
+  if (t.dataset.activeCoupon) {
+    const on = t.dataset.v === '1';
+    if (!on && !confirm('确定停用吗？停用后这个券码马上不能再用。')) return;
+    t.disabled = true;
+    try {
+      const u = await api('/api/admin/coupons/' + encodeURIComponent(t.dataset.activeCoupon) + '/active', { active: on });
+      coupons = coupons.map(c => c.id === u.id ? u : c); render();
+    } catch (err) { alert(err.message); t.disabled = false; }
+  }
   if (t.dataset.edit) { editing = t.dataset.edit; render(); }
   if (t.dataset.relist) {
     const on = t.dataset.v === '1';
@@ -149,6 +241,8 @@ app.addEventListener('click', async ev => {
 });
 app.addEventListener('submit', async ev => {
   const f = ev.target;
+  if (f.id === 'send-form') return submitSend(ev, f);
+  if (f.id === 'coupon-new' || f.id === 'coupon-import' || f.classList.contains('coupon-edit')) return submitCoupon(ev, f);
   if (!f.classList.contains('ship')) return;
   ev.preventDefault();
   const b = f.querySelector('button'), msg = f.querySelector('.err');
@@ -163,6 +257,43 @@ app.addEventListener('submit', async ev => {
     msg.textContent = err.message; b.disabled = false;
   }
 });
+async function submitSend(ev, f) {
+  ev.preventDefault();
+  const b = f.querySelector('button'), msg = f.querySelector('.err');
+  const c = coupons.find(x => x.id === f.coupon.value);
+  const email = f.email.value.trim();
+  const repeat = c.maxRedemptions === 1 && c.sentCount ? `\n\n注意：这张券只能用一次，之前已发给 ${c.lastSentTo}。谁先用谁有效。` : '';
+  if (!confirm(`确认发送？\n\n${email}\n${c.code} · ${c.label}${repeat}`)) return;
+  b.disabled = true; msg.textContent = '';
+  try {
+    const u = await api('/api/admin/coupons/' + encodeURIComponent(c.id) + '/send', { email, message: f.message.value });
+    coupons = coupons.map(x => x.id === u.id ? u : x);
+    sentMsg = `已发送给 ${email}` + (u.sendRecorded ? '' : '（发送记录没有保存）');
+    render();
+  } catch (err) { msg.textContent = err.message; b.disabled = false; }
+}
+async function submitCoupon(ev, f) {
+  ev.preventDefault();
+  const b = f.querySelector('button'), msg = f.querySelector('.err');
+  msg.textContent = '';
+  let url = '/api/admin/coupons', body;
+  if (f.id === 'coupon-import') { url += '/import'; body = { code: f.code.value }; }
+  else {
+    body = { kind: f.kind.value, value: f.value.value, maxRedemptions: f.maxRedemptions.value, expiresOn: f.expiresOn.value, note: f.note.value };
+    if (f.id === 'coupon-new') body.code = f.code.value;
+    else {
+      url += '/' + encodeURIComponent(f.dataset.id);
+      const old = coupons.find(c => c.id === f.dataset.id);
+      if (old.sentCount && !confirm(`这张券已经发出 ${old.sentCount} 次。修改后，已发出的邮件里写的还是旧内容。确定修改吗？`)) return;
+    }
+  }
+  b.disabled = true;
+  try {
+    await api(url, body);
+    editingCoupon = null;
+    await loadCoupons();
+  } catch (err) { msg.textContent = err.message; b.disabled = false; }
+}
 logoutBtn.onclick = async () => { await api('/api/admin/logout', {}).catch(() => {}); showLogin(); };
 load().catch(() => {});
 </script>
