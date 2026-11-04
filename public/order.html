@@ -117,7 +117,7 @@
   const e = v => String(v == null ? '' : v).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const gbp = p => '£' + (p % 100 === 0 ? p / 100 : (p / 100).toFixed(2));
   const thumb = i => i ? '/imgs/email/' + i.split('/').pop().replace(/\.[a-z]+$/i, '') + '.jpg' : '';
-  const fail = () => { root.innerHTML = '<div class="order-eyebrow">Your order · 我的订单</div><h1>We can\u2019t find this order.</h1><p class="order-msg">Please use the link in your confirmation email, or contact <a href="mailto:hello@shuithread.com" style="color:var(--teal);text-decoration:underline">hello@shuithread.com</a>.</p>'; };
+  const fail = () => { root.innerHTML = '<div class="order-eyebrow">Your order · 我的订单</div><h1>We can\'t find this order.</h1><p class="order-msg">Please use the link in your confirmation email, or contact <a href="mailto:hello@shuithread.com" style="color:var(--teal);text-decoration:underline">hello@shuithread.com</a>.</p>'; };
   try {
     const r = await fetch('/api/orders/' + encodeURIComponent(q.get('id') || '') + '?t=' + encodeURIComponent(q.get('t') || ''), { referrerPolicy: 'no-referrer' });
     if (!r.ok) return fail();
@@ -140,7 +140,7 @@
         ${t ? `<div class="order-label">${e(t.carrierName)} tracking number</div>
           <div class="order-track">${e(t.tracking)}</div>
           <a class="order-track-btn" href="${e(t.trackingUrl)}" target="_blank" rel="noopener noreferrer">Track your parcel →</a>`
-        : `<div class="order-label">What happens next</div><p class="order-addr">Your piece is being prepared and will ship within 7–21 days of your order. We\u2019ll email you the tracking number as soon as it leaves the studio.</p>`}
+        : `<div class="order-label">What happens next</div><p class="order-addr">Your piece is being prepared and will ship within 7–21 days of your order. We'll email you the tracking number as soon as it leaves the studio.</p>`}
       </div>
       <div class="order-items">${o.items.map(i => `
         <div class="order-item">
