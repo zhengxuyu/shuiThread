@@ -155,6 +155,9 @@ function customerConfirmation(order, site = DEFAULT_SITE) {
     <p style="margin:12px 0 0;font-family:${SERIF};font-size:15px;line-height:1.7;color:${C.soft};">
       Your piece will be prepared in our Sandu studio and shipped within 7–21 days. We'll write again as soon as it leaves the studio.
     </p>
+    <p style="margin:12px 0 0;font-family:${SERIF};font-size:14px;line-height:1.7;color:${C.muted};">
+      Changed your mind? You have 14 days from delivery to cancel, without giving a reason. Return postage is paid by you unless the piece is faulty. <a href="${site}/returns.html" style="color:${C.teal};">Returns &amp; after-sales</a>
+    </p>
   </td></tr>
 
   <tr><td class="pad" align="left" style="padding:30px 44px 42px;">
@@ -167,7 +170,7 @@ function customerConfirmation(order, site = DEFAULT_SITE) {
       Horsetail hair embroidery from the Shui people of Guizhou, China.
     </div>
     <div style="padding-top:14px;font-family:${MONO};font-size:12px;line-height:1.8;color:#B9B2A5;">
-      <a href="${site}" style="color:#F7F3ED;">shuithread.com</a> &nbsp;·&nbsp; <a href="mailto:${CONTACT}" style="color:#F7F3ED;">${CONTACT}</a>
+      <a href="${site}" style="color:#F7F3ED;">shuithread.com</a> &nbsp;·&nbsp; <a href="mailto:${CONTACT}" style="color:#F7F3ED;">${CONTACT}</a><br><a href="${site}/returns.html" style="color:#F7F3ED;">Returns &amp; after-sales</a>
     </div>
     <div style="padding-top:12px;font-family:${SERIF};font-size:12px;line-height:1.6;color:#8D8678;">
       You're receiving this because you placed an order at shuithread.com. Payments for Shui Thread are processed by CARBONKITE LTD, so you may see this name on your card statement.
@@ -197,6 +200,7 @@ function customerConfirmation(order, site = DEFAULT_SITE) {
     '',
     "Your piece will be prepared in our Sandu studio and shipped within 7-21 days. We'll write again as soon as it leaves the studio.",
     '',
+    `Changed your mind? You have 14 days from delivery to cancel: ${site}/returns.html`,
     `Questions? ${CONTACT}`,
     site,
   ].join('\n');
