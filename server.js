@@ -184,6 +184,10 @@ app.post('/api/create-checkout-session', async (req, res) => {
     const origin = `${req.protocol}://${req.get('host')}`;
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
+      // Card only (Apple Pay / Google Pay still work as card wallets).
+      // Excludes Stripe Link, whose saved-details view hides the shipping
+      // address so buyers can't check it before paying.
+      payment_method_types: ['card'],
       line_items: built.lineItems,
       ...(discounts ? { discounts } : {}),
       shipping_address_collection: { allowed_countries: ['GB'] },
