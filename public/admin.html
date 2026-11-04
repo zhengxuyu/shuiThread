@@ -52,6 +52,16 @@
     .ok { color: var(--teal); font-size: 14px; }
     .code { font-family: ui-monospace, Menlo, monospace; font-size: 16px; font-weight: 600; }
     .actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .table-wrap { max-height: 60vh; overflow: auto; margin-bottom: 14px; background: #fff; border: 1px solid var(--line); border-radius: 4px; }
+    table { width: 100%; min-width: 820px; border-collapse: collapse; font-size: 14px; }
+    th { position: sticky; top: 0; z-index: 1; padding: 10px 12px; background: var(--parch); color: var(--muted); font-size: 12px; font-weight: 500; text-align: left; white-space: nowrap; }
+    td { padding: 10px 12px; border-top: 1px solid var(--line); vertical-align: top; }
+    tr.on td { background: #FBF7F0; }
+    td.code { font-size: 14px; white-space: nowrap; }
+    td.note { max-width: 180px; overflow-wrap: anywhere; color: var(--muted); }
+    td.ops { white-space: nowrap; }
+    td.ops .link { margin-right: 8px; }
+    td .hint { font-size: 12px; overflow-wrap: anywhere; }
     .empty { color: var(--muted); padding: 40px 0; text-align: center; }
     @media (max-width: 600px) { .form, .grid, .ship { grid-template-columns: 1fr; } }
   </style>
@@ -164,23 +174,35 @@ function couponFields(c) {
     <label>到期日期（留空为不过期）<input name="expiresOn" type="date" value="${e(v.expiresOn)}"></label>
     <label class="wide">内部备注（买家看不到）<input name="note" maxlength="200" value="${e(v.note)}"></label>`;
 }
-function couponCard(c) {
-  if (editingCoupon === c.id) {
-    return `<form class="card form coupon-edit" data-id="${e(c.id)}">
-      <h3 class="wide code" style="margin:0">${e(c.code)}</h3>
-      ${c.timesRedeemed ? '<p class="hint wide">这张券已被用过，只能改备注。要改优惠内容，请停用后新建。</p>' : ''}
-      ${couponFields(c)}
-      <div class="wide actions"><button>保存</button><button type="button" class="ghost" data-cancel-coupon="1">取消</button><span class="err" style="min-height:0"></span></div>
-    </form>`;
-  }
-  return `<div class="card">
-    <div class="top"><div><span class="code">${e(c.code)}</span> · ${e(c.label)}</div><span class="badge ${c.sendable ? 'done' : ''}">${couponStatus(c)}</span></div>
-    <div style="font-size:14px;margin-top:8px">${e(couponTerms(c))}</div>
-    ${c.note ? `<div class="hint" style="margin-top:4px">${e(c.note)}</div>` : ''}
-    ${c.sentCount ? `<div class="hint" style="margin-top:4px">已发 ${c.sentCount} 次，最近发给 ${e(c.lastSentTo)}</div>` : ''}
-    <div class="row"><button type="button" class="link" data-edit-coupon="${e(c.id)}">修改</button>
-      <button type="button" class="link" data-active-coupon="${e(c.id)}" data-v="${c.active ? '0' : '1'}">${c.active ? '停用' : '重新启用'}</button></div>
-  </div>`;
+function couponForm(c) {
+  return `<form class="card form coupon-edit" data-id="${e(c.id)}">
+    <h3 class="wide code" style="margin:0">修改 ${e(c.code)}</h3>
+    ${c.timesRedeemed ? '<p class="hint wide">这张券已被用过，只能改备注。要改优惠内容，请停用后新建。</p>' : ''}
+    ${couponFields(c)}
+    <div class="wide actions"><button>保存</button><button type="button" class="ghost" data-cancel-coupon="1">取消</button><span class="err" style="min-height:0"></span></div>
+  </form>`;
+}
+function couponRow(c) {
+  const used = c.maxRedemptions ? `${c.timesRedeemed} / ${c.maxRedemptions}` : `${c.timesRedeemed} / 不限`;
+  return `<tr class="${editingCoupon === c.id ? 'on' : ''}">
+    <td class="code">${e(c.code)}</td>
+    <td>${e(c.label)}</td>
+    <td><span class="badge ${c.sendable ? 'done' : ''}">${couponStatus(c)}</span></td>
+    <td>${e(used)}</td>
+    <td>${e(c.expiresOn || '不过期')}</td>
+    <td>${c.sentCount ? `已发 ${c.sentCount} 次<div class="hint">${e(c.lastSentTo)}</div>` : '—'}</td>
+    <td class="note">${e(c.note || '—')}</td>
+    <td class="ops"><button type="button" class="link" data-edit-coupon="${e(c.id)}">修改</button>
+      <button type="button" class="link" data-active-coupon="${e(c.id)}" data-v="${c.active ? '0' : '1'}">${c.active ? '停用' : '启用'}</button>
+      ${c.active ? '' : `<button type="button" class="link" data-delete-coupon="${e(c.id)}" style="color:var(--orange)">删除</button>`}</td>
+  </tr>`;
+}
+function couponTable() {
+  if (!coupons.length) return '<div class="empty">还没有优惠券</div>';
+  return `<div class="table-wrap" tabindex="0" aria-label="优惠券列表"><table>
+    <thead><tr><th>券码</th><th>优惠</th><th>状态</th><th>已用</th><th>到期</th><th>发送</th><th>备注</th><th>操作</th></tr></thead>
+    <tbody>${coupons.map(couponRow).join('')}</tbody>
+  </table></div>`;
 }
 function couponsView() {
   if (!coupons) return `<div class="empty">${couponErr ? e(couponErr) : '加载中…'}</div>`;
@@ -190,7 +212,7 @@ function couponsView() {
       ${couponFields()}
       <div class="wide actions"><button>创建</button><span class="err" style="min-height:0"></span></div>
     </form>
-    ${coupons.map(couponCard).join('') || '<div class="empty">还没有优惠券</div>'}
+    ${coupons.filter(c => c.id === editingCoupon).map(couponForm).join('')}${couponTable()}
     <form class="card form" id="coupon-import">
       <label class="wide">导入在 Stripe 后台建的券码<input name="code" required autocomplete="off"></label>
       <div class="wide actions"><button class="ghost">导入</button><span class="err" style="min-height:0"></span></div>
@@ -219,6 +241,15 @@ app.addEventListener('click', async ev => {
   }
   if (t.dataset.editCoupon) { editingCoupon = t.dataset.editCoupon; render(); }
   if (t.dataset.cancelCoupon) { editingCoupon = null; render(); }
+  if (t.dataset.deleteCoupon) {
+    const c = coupons.find(x => x.id === t.dataset.deleteCoupon);
+    if (!confirm(`确定删除 ${c.code} 吗？它会从这个列表消失。Stripe 后台仍会保留这条已停用的记录，以后可以用底部的导入找回。`)) return;
+    t.disabled = true;
+    try {
+      await api('/api/admin/coupons/' + encodeURIComponent(c.id) + '/delete', {});
+      coupons = coupons.filter(x => x.id !== c.id); render();
+    } catch (err) { alert(err.message); t.disabled = false; }
+  }
   if (t.dataset.activeCoupon) {
     const on = t.dataset.v === '1';
     if (!on && !confirm('确定停用吗？停用后这个券码马上不能再用。')) return;

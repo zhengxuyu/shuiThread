@@ -12,6 +12,7 @@ const { customerVoucher } = require('./emails');
 const { formatGBP } = require('./voucher');
 
 const REPLACED_TAG = `${SITE_TAG}_replaced`;
+const DELETED_TAG = `${SITE_TAG}_deleted`;
 const CODE = /^[A-Z0-9][A-Z0-9-]{2,31}$/;
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const NOTE_MAX = 200;
@@ -134,6 +135,15 @@ async function setCouponActive(stripe, id, active) {
   return view(await stripeCall(() => stripe.promotionCodes.update(id, { active: Boolean(active) })));
 }
 
+// Stripe has no way to delete a promotion code, so this only removes it from the
+// back office. The stopped code stays in Stripe, and import brings it back.
+async function deleteCoupon(stripe, id) {
+  const p = await getCoupon(stripe, id);
+  if (p.active) throw new OrderError(409, '请先停用这张券，再删除');
+  await stripeCall(() => stripe.promotionCodes.update(id, { metadata: { site: DELETED_TAG } }));
+  return { id, deleted: true };
+}
+
 async function editCoupon(stripe, id, body = {}) {
   const old = await getCoupon(stripe, id);
   const before = view(old);
@@ -205,4 +215,4 @@ async function sendCoupon(stripe, id, { email, message } = {}) {
   return { ...v, sentCount: v.sentCount + 1, lastSentTo: to, lastSentAt: metadata.last_sent_at, sendRecorded: true };
 }
 
-module.exports = { listCoupons, createCoupon, setCouponActive, editCoupon, importCoupon, sendCoupon };
+module.exports = { listCoupons, createCoupon, setCouponActive, deleteCoupon, editCoupon, importCoupon, sendCoupon };
