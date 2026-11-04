@@ -184,10 +184,14 @@ app.post('/api/create-checkout-session', async (req, res) => {
     const origin = `${req.protocol}://${req.get('host')}`;
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
-      // Card only (Apple Pay / Google Pay still work as card wallets).
-      // Excludes Stripe Link, whose saved-details view hides the shipping
-      // address so buyers can't check it before paying.
-      payment_method_types: ['card'],
+      // Payment methods come from a Shui Thread–specific Stripe payment
+      // method configuration (Dashboard → Settings → Payment methods) with
+      // Onelink/Link turned off: Link's saved-details view hides the shipping
+      // address. The Stripe account is shared, so we don't change the
+      // account default. Fallback when unset: card only.
+      ...(process.env.STRIPE_PAYMENT_METHOD_CONFIG
+        ? { payment_method_configuration: process.env.STRIPE_PAYMENT_METHOD_CONFIG }
+        : { payment_method_types: ['card'] }),
       line_items: built.lineItems,
       ...(discounts ? { discounts } : {}),
       shipping_address_collection: { allowed_countries: ['GB'] },
