@@ -193,7 +193,6 @@ async function sendCoupon(stripe, id, { email, message } = {}) {
   await sendEmail({
     from: 'Shui Thread <noreply@shuithread.com>', to: [to], reply_to: 'hello@shuithread.com',
     subject: m.subject, html: m.html, text: m.text,
-    headers: { 'List-Unsubscribe': '<mailto:hello@shuithread.com?subject=Unsubscribe>' },
   }, `voucher-send/${id}/${who}/${minute}`); // A double click can't send twice.
 
   const metadata = { sent_count: String(v.sentCount + 1), last_sent_to: to, last_sent_at: new Date().toISOString() };
