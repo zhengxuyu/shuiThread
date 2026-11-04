@@ -48,6 +48,7 @@ const Cart = (() => {
   }
 
   function clearCart() {
+    try { localStorage.removeItem('shui_voucher'); } catch {}
     saveCart([]);
   }
 
@@ -59,7 +60,43 @@ const Cart = (() => {
     return getCart().reduce((sum, i) => sum + i.qty, 0);
   }
 
-  return { getCart, addItem, removeItem, updateQty, clearCart, getTotal, getCount };
+  // ── Voucher (validated server-side against Stripe promotion codes) ──
+  const VOUCHER_KEY = 'shui_voucher';
+  function getVoucher() {
+    try { return JSON.parse(localStorage.getItem(VOUCHER_KEY)) || null; } catch { return null; }
+  }
+  function setVoucher(v) {
+    try { localStorage.setItem(VOUCHER_KEY, JSON.stringify(v)); } catch {}
+    window.dispatchEvent(new CustomEvent('cartUpdated', { detail: getCart() }));
+  }
+  function clearVoucher() {
+    try { localStorage.removeItem(VOUCHER_KEY); } catch {}
+    window.dispatchEvent(new CustomEvent('cartUpdated', { detail: getCart() }));
+  }
+  // Discount in pence for the current cart (display only — server is authoritative).
+  function getDiscountPence() {
+    const v = getVoucher();
+    const sub = Math.round(getTotal() * 100);
+    if (!v || sub <= 0) return 0;
+    if (v.minimumPence && sub < v.minimumPence) return 0;
+    const d = v.percentOff ? Math.round(sub * v.percentOff / 100) : (v.amountOffPence || 0);
+    return Math.max(0, Math.min(d, sub));
+  }
+  async function applyVoucher(code) {
+    const res = await fetch('/api/validate-voucher', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ code, items: getCart().map(i => ({ id: i.id, qty: i.qty })) })
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Could not apply voucher');
+    setVoucher({ code: data.code, label: data.label, percentOff: data.percentOff,
+                 amountOffPence: data.amountOffPence, minimumPence: data.minimumPence });
+    return data;
+  }
+
+  return { getCart, addItem, removeItem, updateQty, clearCart, getTotal, getCount,
+           getVoucher, clearVoucher, applyVoucher, getDiscountPence };
 })();
 
 // ─── Toast ───
@@ -166,9 +203,73 @@ function renderCartPanel() {
   updatePanelFooter(Cart.getTotal());
 }
 
+function formatPence(p) {
+  return '£' + (p % 100 === 0 ? String(p / 100) : (p / 100).toFixed(2));
+}
+
+function escapeHTML(str) {
+  return String(str).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
 function updatePanelFooter(total) {
+  const footer = document.querySelector('.cart-panel-footer');
   const amountEl = document.querySelector('.cart-subtotal-amount');
-  if (amountEl) amountEl.textContent = `£${total}`;
+  const labelEl = document.querySelector('.cart-subtotal-label');
+  if (!footer || !amountEl) return;
+
+  // Voucher block lives above the subtotal row; created once.
+  let box = footer.querySelector('.cart-voucher');
+  if (!box) {
+    box = document.createElement('div');
+    box.className = 'cart-voucher';
+    footer.insertBefore(box, footer.firstChild);
+  }
+
+  const v = Cart.getVoucher();
+  const discount = Cart.getDiscountPence();
+  const hasItems = total > 0;
+  box.style.display = hasItems ? '' : 'none';
+
+  if (v) {
+    const note = discount === 0 && v.minimumPence
+      ? `<div class="cart-voucher-msg">Minimum spend ${formatPence(v.minimumPence)} not reached</div>` : '';
+    box.innerHTML = `
+      <div class="cart-voucher-applied">
+        <span class="cart-voucher-code">${escapeHTML(v.code)} · ${escapeHTML(v.label)}</span>
+        <span class="cart-voucher-amount">−${formatPence(discount)}</span>
+      </div>
+      ${note}
+      <button type="button" class="cart-voucher-remove">Remove voucher</button>`;
+    box.querySelector('.cart-voucher-remove').addEventListener('click', () => Cart.clearVoucher());
+  } else if (!box.querySelector('form')) {
+    box.innerHTML = `
+      <form class="cart-voucher-form" novalidate>
+        <input type="text" name="code" class="cart-voucher-input" placeholder="Voucher code · 优惠码"
+               autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="64" aria-label="Voucher code">
+        <button type="submit" class="cart-voucher-apply">Apply</button>
+      </form>
+      <div class="cart-voucher-msg" role="status"></div>`;
+    const form = box.querySelector('form');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const input = form.querySelector('input');
+      const btn = form.querySelector('button');
+      const msg = box.querySelector('.cart-voucher-msg');
+      const code = input.value.trim();
+      if (!code) { msg.textContent = 'Please enter a voucher code'; return; }
+      btn.disabled = true; btn.textContent = '…'; msg.textContent = '';
+      try {
+        await Cart.applyVoucher(code);
+        showToast('Voucher applied');
+      } catch (err) {
+        msg.textContent = err.message;
+        btn.disabled = false; btn.textContent = 'Apply';
+      }
+    });
+  }
+
+  if (labelEl) labelEl.textContent = v && discount > 0 ? 'Total' : 'Subtotal';
+  amountEl.textContent = formatPence(Math.round(total * 100) - discount);
 }
 
 function changeQty(id, qty) {
